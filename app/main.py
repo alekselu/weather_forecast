@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.db import get_connection
+from app.db import connection, connection_params
 import os
 
 app = FastAPI()
@@ -13,7 +13,7 @@ def root():
 @app.get("/health/db")
 def check_db():
     try:
-        conn = get_connection()
+        conn = connection()
         with conn.cursor() as cur:
             cur.execute("SELECT 1;")
             result = cur.fetchone()
@@ -26,8 +26,5 @@ def check_db():
         return {
             "status": "error",
             "details": str(e),
-            "db_host": os.getenv("DB_HOST", "db"),
-            "dbname": os.getenv("DB_NAME", "weather"),
-            "user": os.getenv("DB_USER", "weather_user"),
-            "password": os.getenv("DB_PASSWORD", "weather_pass"),
+            **connection_params(),
         }
