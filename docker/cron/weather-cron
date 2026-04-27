@@ -1,0 +1,4 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+* * * * * root /usr/local/bin/python3 -u /app/app/update_data/update_data.py >> /proc/1/fd/1 2>> /proc/1/fd/2

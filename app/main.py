@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from typing import Any
-from app.db import connection, connection_params
+from app import db
 
 app = FastAPI()
 
@@ -12,16 +12,5 @@ def root():
 
 @app.get("/health/db")
 def check_db() -> dict[str, Any]:
-    try:
-        conn = connection()
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1;")
-            result = cur.fetchone()
-        conn.close()
-        return {"status": "ok", "db_response": result[0]}
-    except Exception as e:
-        return {
-            "status": "error",
-            "details": str(e),
-            **connection_params(),
-        }
+    result: db.DatabaseHealthResponse = db.check_db()
+    return result.to_dict()
