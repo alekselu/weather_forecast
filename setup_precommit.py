@@ -6,18 +6,28 @@ import os
 from pathlib import Path
 
 
-def run_command(cmd, description):
+def run_command(cmd, description, capture_output=True):
     """Execute command and output status."""
     print(f"{description}...")
     try:
-        result = subprocess.run(
-            cmd, shell=True, check=True, capture_output=True, text=True
-        )
-        print(f"{description} - SUCCESS")
-        return True
+        if capture_output:
+            result = subprocess.run(
+                cmd, shell=True, check=True, capture_output=True, text=True
+            )
+            print(f"{description} - SUCCESS")
+            if result.stdout:
+                print(result.stdout)
+            return True
+        else:
+            result = subprocess.run(cmd, shell=True, check=True)
+            print(f"{description} - SUCCESS")
+            return True
     except subprocess.CalledProcessError as e:
         print(f"ERROR AT {description}:")
-        print(e.stderr)
+        if e.stdout:
+            print("STDOUT:", e.stdout)
+        if e.stderr:
+            print("STDERR:", e.stderr)
         return False
 
 
@@ -51,7 +61,12 @@ def main():
 
     response = input("Run pre-commit for all files now? (y/n): ")
     if response.lower() == "y":
-        run_command("pre-commit run --all-files", "Start pre-commit")
+        if not run_command(
+            "pre-commit run --all-files", "Start pre-commit", capture_output=False
+        ):
+            print("\nPre-commit found problems, which is OK for the first run.")
+            print("Run the command to see details:")
+            print("   pre-commit run --all-files")
 
     print("\nSetup finished.")
     print("For independent run: pre-commit run --all-files")
