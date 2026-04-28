@@ -18,10 +18,7 @@ def check_db():
             cur.execute("SELECT 1;")
             result = cur.fetchone()
         conn.close()
-        return {
-            "status": "ok",
-            "db_response": result[0]
-        }
+        return {"status": "ok", "db_response": result[0]}
     except Exception as e:
         return {
             "status": "error",

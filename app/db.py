@@ -4,9 +4,7 @@ from typing import Any
 
 
 def connection():
-    return psycopg.connect(
-        **connection_params()
-    )
+    return psycopg.connect(**connection_params())
 
 
 def connection_params() -> dict[str, Any]:
@@ -15,5 +13,5 @@ def connection_params() -> dict[str, Any]:
         "port": os.getenv("DB_PORT", 5432),
         "dbname": os.getenv("DB_NAME", "weather"),
         "user": os.getenv("DB_USER", "admin"),
-        "password": os.getenv("DB_PASSWORD",),
+        "password": os.getenv("DB_PASSWORD"),
     }
