@@ -1,6 +1,6 @@
 from fastapi import FastAPI
+from typing import Any
 from app.db import connection, connection_params
-import os
 
 app = FastAPI()
 
@@ -11,7 +11,7 @@ def root():
 
 
 @app.get("/health/db")
-def check_db():
+def check_db() -> dict[str, Any]:
     try:
         conn = connection()
         with conn.cursor() as cur:

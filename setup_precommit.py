@@ -2,11 +2,10 @@
 
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 
-def run_command(cmd, description, capture_output=True):
+def run_command(cmd: str, description: str, capture_output: bool = True):
     """Execute command and output status."""
     print(f"{description}...")
     try:
