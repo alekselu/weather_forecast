@@ -2,3 +2,11 @@ fastapi[standard]
 psycopg[binary]
 geopy
 python-dotenv
+black
+isort
+
+# for ipynb
+# pandas
+# numpy
+# scikit-learn
+# xgboost
