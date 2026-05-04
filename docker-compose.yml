@@ -28,11 +28,12 @@ services:
       db:
         condition: service_healthy
     environment:
-      DB_HOST: db
+      DB_HOST: ${POSTGRES_HOST}
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_PORT: ${POSTGRES_PORT}
+      DATABASE_URL: ${DATABASE_URL}
     volumes:
       - .:/app
     ports:

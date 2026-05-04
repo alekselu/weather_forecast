@@ -4,6 +4,8 @@ geopy
 python-dotenv
 black
 isort
+alembic
+load_dotenv
 
 # for ipynb
 # pandas

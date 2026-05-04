@@ -9,18 +9,26 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 
+from dotenv import load_dotenv
 import os
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.db.base import Base
-from app.db.models import weather_daily  # важно импортировать модели
+from app.db.models import weather_daily
 
 config = context.config
 
-# Подставляем URL из .env
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
+
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL is None:
+    raise ValueError("DATABASE_URL is not set")
+
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
+print("set url")
 
 target_metadata = Base.metadata
 
@@ -33,7 +41,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+# target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
