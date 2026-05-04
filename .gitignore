@@ -2,3 +2,7 @@
 .vscode
 pyproject.toml
 .env
+
+*__pycache__*
+.github
+.refact
