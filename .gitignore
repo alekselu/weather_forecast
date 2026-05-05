@@ -2,10 +2,6 @@
 .vscode
 pyproject.toml
 .env
-
-*__pycache__*
-<<<<<<< HEAD
+__*pycache__*
 .github
 .refact
-=======
->>>>>>> main
