@@ -6,6 +6,7 @@ from app.router.messages.messages import (
     NecessaryRequestParams,
     ResponseData,
     DailyDataParams,
+    HourlyDataParams,
 )
 from app.router.router import AsyncRouter
 
@@ -21,7 +22,9 @@ async def main():
         TimeRequestParams.str_to_date("2026-05-03"),
         TimeRequestParams.str_to_date("2026-05-05"),
     )
-    request = Request(necessary_params, time_params, [DailyDataParams])
+    request = Request(
+        necessary_params, time_params, [DailyDataParams, HourlyDataParams]
+    )
 
     response: ResponseData = await router.send_request(request)
     print(response.data)
