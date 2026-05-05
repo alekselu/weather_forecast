@@ -6,6 +6,7 @@ black
 isort
 alembic
 load_dotenv
+once
 
 # for ipynb
 # pandas

@@ -1,19 +1,21 @@
 from datetime import datetime, timezone
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def update_data():
-    print(
-        f"[CRON] update_data called at {datetime.now(timezone.utc).isoformat()}",
+    logger.info(
+        f"[CRON] update_data called",
         flush=True,
     )
 
 
 if __name__ == "__main__":
-    print(
-        f"[CRON] script started at {datetime.now(timezone.utc).isoformat()}", flush=True
-    )
+    logger.info(f"[CRON] script started", flush=True)
     update_data()
-    print(
-        f"[CRON] script finished at {datetime.now(timezone.utc).isoformat()}",
+    logger.info(
+        f"[CRON] script finished",
         flush=True,
     )

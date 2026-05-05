@@ -4,5 +4,8 @@ pyproject.toml
 .env
 
 *__pycache__*
+<<<<<<< HEAD
 .github
 .refact
+=======
+>>>>>>> main
