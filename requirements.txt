@@ -4,6 +4,7 @@ geopy
 python-dotenv
 black
 isort
+once
 
 # for ipynb
 # pandas
