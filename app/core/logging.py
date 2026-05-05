@@ -1,7 +1,9 @@
 import logging
 import sys
+from once import once
 
 
+@once
 def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
