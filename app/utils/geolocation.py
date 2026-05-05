@@ -13,7 +13,6 @@ class GeoCoder:
             user_agent=self._user_agent,
             adapter_factory=AioHTTPAdapter,
         )
-        # wrap the async geocode coroutine directly
         self._ratelimiter = AsyncRateLimiter(
             self._geolocator.geocode,
             min_delay_seconds=request_delay,
