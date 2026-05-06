@@ -1,5 +1,5 @@
 import httpx
-from httpx import AsyncClient
+from httpx import AsyncClient, HTTPStatusError
 from typing import Dict, Any
 
 from app.router.messages.messages import (
@@ -99,5 +99,15 @@ class AsyncRouter:
     async def send_request(self, request: Request) -> ResponseData:
         constructed_request = self._build_request(request)
         response = await self._send_request(constructed_request)
-        response.raise_for_status()
-        return self._build_response(request, response)
+        try:
+            response.raise_for_status()
+            return self._build_response(request, response)
+        except HTTPStatusError as e:
+            message = str(e)
+            exception_request = e.request
+            exception_response = e.response
+            msg = f"Message: {message}\nRequest: {repr(exception_request)}\nResponse: {repr(exception_response)}"
+            raise Exception(msg)
+        except Exception as e:
+            msg = f"Not HTTP Error occured: {str(e)}"
+            raise Exception(msg)
