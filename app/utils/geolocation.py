@@ -101,19 +101,11 @@ class GeoCoder:
 
         address = location.raw.get("address", {})
 
-        place_type = None
-        place_name = None
-
-        for key in ("city", "town", "village", "municipality", "hamlet"):
-            value = address.get(key)
-            if value:
-                place_type = key
-                place_name = value
-                break
+        place_name = address.get("city", None)
 
         country_code = address.get("country_code")
 
-        if not place_type or not place_name:
+        if not place_name:
             raise ValueError(f"Could not extract place from address: {address!r}")
 
         if not country_code:
