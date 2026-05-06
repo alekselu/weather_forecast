@@ -1,128 +1,36 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from './assets/vite.svg'
-// import heroImg from './assets/hero.png'
-// import './App.css'
-
-// function App() {
-//   const [count, setCount] = useState(0)
-
-//   return (
-//     <>
-//       <section id="center">
-//         <button
-//           type="button"
-//           className="counter"
-//           onClick={() => setCount((count) => count + 1)}
-//         >
-//           Count is {count}
-//         </button>
-//       </section>
-
-//       <div className="ticks"></div>
-
-//       <section id="next-steps">
-//         <div id="docs">
-//           <svg className="icon" role="presentation" aria-hidden="true">
-//             <use href="/icons.svg#documentation-icon"></use>
-//           </svg>
-//           <h2>Documentation</h2>
-//           <p>Your questions, answered</p>
-//           <ul>
-//             <a href="https://github.com/alekselu/weather_forecast/issues" target="_blank">
-//               <svg
-//                 className="button-icon"
-//                 role="presentation"
-//                 aria-hidden="true"
-//               >
-//                 <use href="/icons.svg#github-icon"></use>
-//               </svg>
-//               GitHub
-//             </a>
-//           </ul>
-//         </div>
-//         <div id="social">
-//           <svg className="icon" role="presentation" aria-hidden="true">
-//             <use href="/icons.svg#social-icon"></use>
-//           </svg>
-//           <h2>Connect with us</h2>
-//           <p>Join our community</p>
-//           <ul>
-//             <li>
-//               <a href="https://github.com/alekselu/weather_forecast" target="_blank">
-//                 <svg
-//                   className="button-icon"
-//                   role="presentation"
-//                   aria-hidden="true"
-//                 >
-//                   <use href="/icons.svg#github-icon"></use>
-//                 </svg>
-//                 GitHub
-//               </a>
-//             </li>
-
-//           </ul>
-//         </div>
-//       </section>
-
-//       <div className="ticks"></div>
-//       <section id="spacer"></section>
-//     </>
-//   )
-// }
-
-// export default App
 import { useState } from 'react'
 import './App.css'
 
-const API_URL = '/api/forecast'
+const API_URL = 'http://localhost:8000/forecast'
 
-const DAILY_FIELDS = [
+const FORECAST_FIELDS = [
   {
-    name: 'temperature_2m_mean',
-    label: 'Daily mean temperature',
+    name: 'temperature',
+    label: 'Temperature',
   },
   {
-    name: 'temperature_2m_min',
-    label: 'Daily minimum temperature',
+    name: 'humidity',
+    label: 'Humidity',
   },
   {
-    name: 'temperature_2m_max',
-    label: 'Daily maximum temperature',
-  },
-]
-
-const HOURLY_FIELDS = [
-  {
-    name: 'temperature_2m',
-    label: 'Hourly temperature',
+    name: 'wind',
+    label: 'Wind',
   },
 ]
 
 function App() {
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-
-  const [dailyFields, setDailyFields] = useState([])
-  const [hourlyFields, setHourlyFields] = useState([])
+  const [time, setTime] = useState('')
+  const [params, setParams] = useState([])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [forecast, setForecast] = useState(null)
 
-  const handleDailyFieldChange = (fieldName) => {
-    setDailyFields((currentFields) =>
-      currentFields.includes(fieldName)
-        ? currentFields.filter((field) => field !== fieldName)
-        : [...currentFields, fieldName],
-    )
-  }
-
-  const handleHourlyFieldChange = (fieldName) => {
-    setHourlyFields((currentFields) =>
-      currentFields.includes(fieldName)
-        ? currentFields.filter((field) => field !== fieldName)
-        : [...currentFields, fieldName],
+  const handleParamChange = (paramName) => {
+    setParams((currentParams) =>
+      currentParams.includes(paramName)
+        ? currentParams.filter((param) => param !== paramName)
+        : [...currentParams, paramName],
     )
   }
 
@@ -132,37 +40,29 @@ function App() {
     setError('')
     setForecast(null)
 
-    if (!startDate || !endDate) {
-      setError('Please choose start date and end date.')
+    if (!time) {
+      setError('Please choose a date.')
       return
     }
 
-    if (new Date(startDate) > new Date(endDate)) {
-      setError('Start date cannot be later than end date.')
+    if (params.length === 0) {
+      setError('Please choose at least one forecast parameter.')
       return
     }
 
-    if (dailyFields.length === 0 && hourlyFields.length === 0) {
-      setError('Please choose at least one forecast field.')
-      return
-    }
+    const searchParams = new URLSearchParams()
 
-    const payload = {
-      start_date: startDate,
-      end_date: endDate,
-      daily: dailyFields,
-      hourly: hourlyFields,
-    }
+    searchParams.append('time', time)
+
+    params.forEach((param) => {
+      searchParams.append('params', param)
+    })
 
     try {
       setLoading(true)
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(`${API_URL}?${searchParams.toString()}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
@@ -185,50 +85,24 @@ function App() {
           <h1>Temperature Forecast</h1>
 
           <div className="form-row">
-            <label htmlFor="start-date">Start date</label>
+            <label htmlFor="forecast-date">Date</label>
             <input
-              id="start-date"
+              id="forecast-date"
               type="date"
-              value={startDate}
-              onChange={(event) => setStartDate(event.target.value)}
-            />
-          </div>
-
-          <div className="form-row">
-            <label htmlFor="end-date">End date</label>
-            <input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(event) => setEndDate(event.target.value)}
+              value={time}
+              onChange={(event) => setTime(event.target.value)}
             />
           </div>
 
           <fieldset className="field-group">
-            <legend>Daily fields</legend>
+            <legend>Forecast parameters</legend>
 
-            {DAILY_FIELDS.map((field) => (
+            {FORECAST_FIELDS.map((field) => (
               <label key={field.name} className="checkbox-row">
                 <input
                   type="checkbox"
-                  checked={dailyFields.includes(field.name)}
-                  onChange={() => handleDailyFieldChange(field.name)}
-                />
-                <span>{field.label}</span>
-                <code>{field.name}</code>
-              </label>
-            ))}
-          </fieldset>
-
-          <fieldset className="field-group">
-            <legend>Hourly fields</legend>
-
-            {HOURLY_FIELDS.map((field) => (
-              <label key={field.name} className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={hourlyFields.includes(field.name)}
-                  onChange={() => handleHourlyFieldChange(field.name)}
+                  checked={params.includes(field.name)}
+                  onChange={() => handleParamChange(field.name)}
                 />
                 <span>{field.label}</span>
                 <code>{field.name}</code>
