@@ -10,6 +10,10 @@ from app.router.messages.messages import (
 )
 from app.router.router import AsyncRouter
 
+from app.core.logging import setup_logging
+
+setup_logging()
+
 logger = logging.getLogger(__name__)
 
 
