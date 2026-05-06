@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 from typing import Any, Annotated, Dict
 from app import db
 from datetime import date
@@ -10,6 +11,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+origins = ["http://localhost:3000", "http://localhost:5173"]  # Example: React app
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
