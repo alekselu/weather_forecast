@@ -19,15 +19,14 @@ class XGBWeatherModel(BaseModel):
 
     def fit(self, X, y):
         self.model.fit(X, y)
+        return self
 
     def predict(self, X):
-        preds = self.model.predict(X)
-        return pd.DataFrame(preds, columns=y.columns)
+        return self.model.predict(X)
 
     def update(self, X, y):
-        # XGBoost не поддерживает полноценный incremental
-        # поэтому делаем retrain
-        self.fit(X, y)
+        self.model.fit(X, y)
+        return self
 
     def save(self, path):
         joblib.dump(self.model, path)

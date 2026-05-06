@@ -1,6 +1,5 @@
 import pandas as pd
-from darts import TimeSeries
-from darts.models import SARIMAX
+import statsmodels.api as sm
 from app.ml.base_model import BaseModel
 
 
@@ -8,24 +7,26 @@ class SARIMAXModel(BaseModel):
     def __init__(self, order=(1, 1, 1), seasonal_order=(1, 1, 1, 365)):
         self.order = order
         self.seasonal_order = seasonal_order
-        self.models = {}
+        self.model = None
 
     def fit(self, X, y):
-        for col in y.columns:
-            series = TimeSeries.from_series(y[col])
-            model = SARIMAX(order=self.order, seasonal_order=self.seasonal_order)
-            model.fit(series)
-            self.models[col] = model
+        self.model = sm.tsa.statespace.SARIMAX(
+            y,
+            exog=X,
+            order=(2, 1, 2),
+            # seasonal_order=(1, 1, 1, 365)
+        )
+        self.res = self.model.fit(disp=False)
+        return self
 
     def predict(self, X):
-        result = {}
-        for col, model in self.models.items():
-            forecast = model.predict(1)
-            result[col] = forecast.values().flatten()[0]
-        return pd.DataFrame([result])
+        return self.res.forecast(
+            len(X),
+        )
 
     def update(self, X, y):
         self.fit(X, y)
+        return self
 
     def save(self, path):
         pass

@@ -1,18 +1,11 @@
 from abc import ABC, abstractmethod
-import pandas as pd
+from sklearn.base import BaseEstimator, RegressorMixin
+import numpy as np
 
 
-class BaseModel(ABC):
+class BaseModel(ABC, BaseEstimator, RegressorMixin):
     @abstractmethod
-    def fit(self, X: pd.DataFrame, y: pd.DataFrame):
-        pass
-
-    @abstractmethod
-    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
-        pass
-
-    @abstractmethod
-    def update(self, X: pd.DataFrame, y: pd.DataFrame):
+    def update(self, X: np.ndarray, y: np.ndarray):
         """Incremental learning"""
         pass
 

@@ -4,7 +4,7 @@ import numpy as np
 
 
 def evaluate_model(model, X, y):
-    tscv = TimeSeriesSplit(n_splits=3)
+    tscv = TimeSeriesSplit(n_splits=5)
     scores = []
 
     for train_idx, test_idx in tscv.split(X):
