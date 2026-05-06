@@ -4,6 +4,7 @@ from typing import Any, Annotated, Dict
 from app import db
 from datetime import date
 from app.core.logging import setup_logging
+from app.utils.geolocation import GeoCoder
 
 setup_logging()
 import logging
@@ -22,6 +23,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+geocoder = GeoCoder()
+
 
 @app.get("/")
 def root():
@@ -36,10 +39,20 @@ def check_db() -> dict[str, Any]:
 
 # Example: GET /forecast?time=2026-05-06&params=temperature&params=humidity&params=wind
 @app.get("/forecast")
-def get_forecast(
-    time: Annotated[date, Query()], params: list[str] = Query()
+async def get_forecast(
+    time: Annotated[date, Query()],
+    city: Annotated[str, Query()],
+    country_code: str = "ru",
+    params: list[str] = Query(),
 ) -> dict[str, Any]:
     result: Dict[str, Any] = {}
     result["time"] = time
+    result["city"] = city
+    try:
+        coords = await geocoder.fetch_location(city, country_code)
+        result["coords"] = str(coords)
+    except Exception as e:
+        result["coords"] = str(e)
+    result["country_code"] = country_code
     result["params"] = params
     return result

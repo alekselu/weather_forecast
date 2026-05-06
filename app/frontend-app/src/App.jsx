@@ -20,6 +20,8 @@ const FORECAST_FIELDS = [
 
 function App() {
   const [time, setTime] = useState('')
+  const [city, setCity] = useState('')
+  const [countryCode, setCountryCode] = useState('ru')
   const [params, setParams] = useState([])
 
   const [loading, setLoading] = useState(false)
@@ -40,6 +42,16 @@ function App() {
     setError('')
     setForecast(null)
 
+    if (!city.trim()) {
+      setError('Please enter a city name.')
+      return
+    }
+
+    if (!countryCode.trim()) {
+      setError('Please enter a country code.')
+      return
+    }
+
     if (!time) {
       setError('Please choose a date.')
       return
@@ -52,6 +64,8 @@ function App() {
 
     const searchParams = new URLSearchParams()
 
+    searchParams.append('city', city.trim())
+    searchParams.append('country_code', countryCode.trim().toLowerCase())
     searchParams.append('time', time)
 
     params.forEach((param) => {
@@ -83,6 +97,29 @@ function App() {
       <section id="center">
         <form className="forecast-form" onSubmit={handleSubmit}>
           <h1>Temperature Forecast</h1>
+
+          <div className="form-row">
+            <label htmlFor="city">City</label>
+            <input
+              id="city"
+              type="text"
+              value={city}
+              onChange={(event) => setCity(event.target.value)}
+              placeholder="Moscow"
+            />
+          </div>
+
+          <div className="form-row">
+            <label htmlFor="country-code">Country code</label>
+            <input
+              id="country-code"
+              type="text"
+              value={countryCode}
+              onChange={(event) => setCountryCode(event.target.value)}
+              placeholder="ru"
+              maxLength={2}
+            />
+          </div>
 
           <div className="form-row">
             <label htmlFor="forecast-date">Date</label>
