@@ -31,7 +31,7 @@ async def main():
     )
 
     response: ResponseData = await router.send_request(request)
-    print(response.data)
+    logger.info(response.data)
     logger.info("[CRON] script finished")
 
 
