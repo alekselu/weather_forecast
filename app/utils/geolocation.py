@@ -100,9 +100,7 @@ class GeoCoder:
             raise ValueError("Got empty location")
 
         address = location.raw.get("address", {})
-
         place_name = address.get("city", None)
-
         country_code = address.get("country_code")
 
         if not place_name:
@@ -124,6 +122,7 @@ class GeoCoder:
             query=(coords.latitude, coords.longitude),
             exactly_one=True,
             addressdetails=True,
+            language="en",
         )
 
         return self._extract_city_and_country_code(loc)

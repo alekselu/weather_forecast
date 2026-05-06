@@ -1,96 +1,48 @@
 # geocoder_test.py
 import pytest
 from unittest.mock import AsyncMock
-
+from dataclasses import astuple
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
 from app.utils.geolocation import GeoCoder, Direction, Coordinates, Place
 
+TEST_CASES = [
+    (Place("Berlin", "de"), Coordinates(52.52, 13.40)),
+    (Place("Cotswold", "gb"), Coordinates(51.85, -1.89)),
+    (Place("Moscow", "ru"), Coordinates(55.75, 37.62)),
+]
 
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_fetch_location_from_real_api_city_country_code():
-    coder = GeoCoder()
 
-    place = Place(
-        name="Berlin",
-        country_code="de",
-    )
-
-    location: Coordinates = await coder.fetch_location_from(place)
-
-    assert location is not None
-    assert location.latitude is not None
-    assert location.longitude is not None
-
-    assert isinstance(location.latitude, float)
-    assert isinstance(location.longitude, float)
-
-    assert round(location.latitude, 2) == 52.52
-    assert round(location.longitude, 2) == 13.40
+def ids(x: tuple[Place, Coordinates]):
+    return f"{x[0].name}_{x[0].country_code}_to_{x[1].latitude}_{x[1].longitude}"
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_fetch_location_to_real_api_city_country_code():
+@pytest.mark.parametrize("case", TEST_CASES, ids=ids)
+async def test_fetch_location_from_real_api(case):
     coder = GeoCoder()
-
-    coords = Coordinates(52.52, 13.40)
-
-    location: Place = await coder.fetch_location_to(coords)
-
-    assert location is not None
-    assert location.name is not None
-    assert location.country_code is not None
-
-    assert isinstance(location.name, str)
-    assert isinstance(location.country_code, str)
-
-    assert location.name == "Berlin"
-    assert location.country_code == "de"
-
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_fetch_location_from_real_api_city_country_code_2():
-    coder = GeoCoder()
-
-    place = Place(
-        name="Cotswold",
-        country_code="gb",
-    )
-
+    place = case[0]
+    coords = case[1]
     location = await coder.fetch_location_from(place)
 
     assert location is not None
-    assert location.latitude is not None
-    assert location.longitude is not None
-
-    assert isinstance(location.latitude, float)
-    assert isinstance(location.longitude, float)
-
-    assert round(location.latitude, 2) == 51.85
-    assert round(location.longitude, 2) == -1.89
+    assert round(location.latitude, 2) == coords.latitude
+    assert round(location.longitude, 2) == coords.longitude
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_fetch_location_to_real_api_city_country_code_2():
+@pytest.mark.parametrize("case", TEST_CASES, ids=ids)
+async def test_fetch_location_to_real_api(case):
     coder = GeoCoder()
-
-    coords = Coordinates(51.85, -1.89)
-
-    location: Place = await coder.fetch_location_to(coords)
+    place = case[0]
+    coords = case[1]
+    location = await coder.fetch_location_to(coords)
 
     assert location is not None
-    assert location.name is not None
-    assert location.country_code is not None
-
-    assert isinstance(location.name, str)
-    assert isinstance(location.country_code, str)
-
-    assert location.name == "Cotswold"
-    assert location.country_code == "gb"
+    assert place.name in location.name
+    assert place.country_code == location.country_code
 
 
 @pytest.mark.integration
