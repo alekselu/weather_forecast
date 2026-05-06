@@ -5,16 +5,16 @@ const API_URL = 'http://localhost:8000/forecast'
 
 const FORECAST_FIELDS = [
   {
-    name: 'temperature',
-    label: 'Temperature',
+    name: 'temperature_2m_mean',
+    label: 'Mean temperature',
   },
   {
-    name: 'humidity',
-    label: 'Humidity',
+    name: 'temperature_2m_max',
+    label: 'Max temperature',
   },
   {
-    name: 'wind',
-    label: 'Wind',
+    name: 'temperature_2m_min',
+    label: 'Min temperature',
   },
 ]
 
