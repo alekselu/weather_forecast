@@ -2,11 +2,25 @@ from __future__ import annotations
 
 from enum import Enum
 from functools import partial
+from dataclasses import dataclass
 from geopy.adapters import AioHTTPAdapter
 from geopy.exc import GeocoderServiceError, GeocoderTimedOut, GeocoderUnavailable
 from geopy.extra.rate_limiter import AsyncRateLimiter
 from geopy.geocoders import Nominatim
 from geopy.location import Location
+
+
+@dataclass
+class Coordinates:
+    latitude: float
+    longitude: float
+
+
+@dataclass
+class Place:
+    name: str
+    type: str = "city"
+    country_code: str = "ru"
 
 
 class Direction(Enum):
@@ -68,48 +82,53 @@ class GeoCoder:
 
     async def fetch_location_from(
         self,
-        city: str,
-        country_code: str = "ru",
-    ) -> tuple[float, float]:
+        place: Place,
+    ) -> Coordinates:
         loc: Location = await self._fetch_location_by(
             direction=Direction.FROM,
             query={
-                "city": city,
-                "countrycodes": country_code,
+                place.type: place.name,
+                "countrycodes": place.country_code,
             },
             exactly_one=True,
         )
 
-        return float(loc.latitude), float(loc.longitude)
+        return Coordinates(float(loc.latitude), float(loc.longitude))
 
     @staticmethod
-    def _extract_city_and_country_code(location: Location | None) -> tuple[str, str]:
+    def _extract_city_and_country_code(location: Location | None) -> Place:
         if location is None:
             raise ValueError("Got empty location")
 
         address = location.raw.get("address", {})
 
-        city = (
-            address.get("city")
-            or address.get("town")
-            or address.get("village")
-            or address.get("municipality")
-            or address.get("hamlet")
-        )
+        place_type = None
+        place_name = None
+
+        for key in ("city", "town", "village", "municipality", "hamlet"):
+            value = address.get(key)
+            if value:
+                place_type = key
+                place_name = value
+                break
 
         country_code = address.get("country_code")
 
-        if not city:
-            raise ValueError(f"Could not extract city from address: {address!r}")
+        if not place_type or not place_name:
+            raise ValueError(f"Could not extract place from address: {address!r}")
 
         if not country_code:
             raise ValueError(
                 f"Could not extract country code from address: {address!r}"
             )
 
-        return city, country_code
+        return Place(
+            type=place_type,
+            name=place_name,
+            country_code=country_code,
+        )
 
-    async def fetch_location_to(self, lat: float, long: float) -> tuple[str, str]:
+    async def fetch_location_to(self, lat: float, long: float) -> Place:
         loc: Location = await self._fetch_location_by(
             direction=Direction.TO,
             query=(lat, long),
