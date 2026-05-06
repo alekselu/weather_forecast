@@ -1,6 +1,7 @@
 from dataclasses import dataclass, fields, asdict
 from datetime import date, datetime
 from typing import ClassVar, Any, Dict
+from abc import ABC, abstractmethod
 
 
 @dataclass
@@ -38,23 +39,32 @@ class TimeRequestParams:
 
 
 @dataclass
-class DataParams:
-    data_time_period: ClassVar[str]
+class DataParams(ABC):
+    @classmethod
+    @abstractmethod
+    def get_time_period(cls) -> str:
+        pass
 
 
 @dataclass
 class DailyDataParams(DataParams):
-    data_time_period: ClassVar[str] = "daily"
     temperature_2m_mean: float
     temperature_2m_min: float
     temperature_2m_max: float
+
+    @classmethod
+    def get_time_period(cls) -> str:
+        return "daily"
 
 
 # Maybe will be used later
 @dataclass
 class HourlyDataParams(DataParams):
-    data_time_period: ClassVar[str] = "hourly"
     temperature_2m: float
+
+    @classmethod
+    def get_time_period(cls) -> str:
+        return "hourly"
 
 
 def get_DataParams_by_period(data_time_period: str, **kwargs) -> DataParams:
@@ -91,7 +101,7 @@ class Request:
         """
         result: Dict[str, tuple[str, ...]] = {}
         for data_cls in self.data_params:
-            period = data_cls.data_time_period
+            period = data_cls.get_time_period()
             variable_names = tuple(f.name for f in fields(data_cls))
             result[period] = variable_names
         return result
