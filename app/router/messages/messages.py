@@ -2,12 +2,23 @@ from dataclasses import dataclass, fields, asdict
 from datetime import date, datetime
 from typing import ClassVar, Any, Dict
 from abc import ABC, abstractmethod
+from enum import StrEnum
 
 
 @dataclass
-class NecessaryRequestParams:
+class ISimpleParams(ABC):
+    @abstractmethod
+    def as_params(self) -> Dict[str, str]:
+        pass
+
+
+@dataclass
+class RequiredRequestParams(ISimpleParams):
     latitude: float
     longitude: float
+
+    def as_params(self) -> Dict[str, str]:
+        return asdict(self)
 
 
 @dataclass
@@ -15,35 +26,43 @@ class TimeFormat:
     time_format: ClassVar[str] = "%Y-%m-%d"
 
     @classmethod
-    def str_to_date(cls, string: str):
+    def str_to_date(cls, string: str) -> datetime:
         return datetime.strptime(string, cls.time_format)
+
+    @classmethod
+    def str_from_date(cls, date: datetime) -> str:
+        return date.strftime(cls.time_format)
 
 
 @dataclass
-class TimeRequestParams:
+class TimeRequestParams(TimeFormat, ISimpleParams):
     start_date: date
     end_date: date
-    _time_format: ClassVar[TimeFormat] = TimeFormat()
 
     def as_params(self) -> Dict[str, str]:
         return dict(
             map(
-                lambda item: (item[0], item[1].strftime(self._time_format.time_format)),
+                lambda item: (item[0], TimeFormat.str_from_date(item[1])),
                 asdict(self).items(),
             )
         )
 
-    @classmethod
-    def str_to_date(cls, string: str):
-        return cls._time_format.str_to_date(string)
+
+class TimePeriod(StrEnum):
+    DAILY = "daily"
+    HOURLY = "hourly"
 
 
 @dataclass
 class DataParams(ABC):
     @classmethod
     @abstractmethod
-    def get_time_period(cls) -> str:
+    def time_period(cls) -> TimePeriod:
         pass
+
+    @classmethod
+    def field_names(cls) -> tuple[str, ...]:
+        return tuple(f.name for f in fields(cls))
 
 
 @dataclass
@@ -53,8 +72,8 @@ class DailyDataParams(DataParams):
     temperature_2m_max: float
 
     @classmethod
-    def get_time_period(cls) -> str:
-        return "daily"
+    def time_period(cls) -> TimePeriod:
+        return TimePeriod.DAILY
 
 
 # Maybe will be used later
@@ -63,35 +82,40 @@ class HourlyDataParams(DataParams):
     temperature_2m: float
 
     @classmethod
-    def get_time_period(cls) -> str:
-        return "hourly"
+    def time_period(cls) -> TimePeriod:
+        return TimePeriod.HOURLY
 
 
-def get_DataParams_by_period(data_time_period: str, **kwargs) -> DataParams:
-    match data_time_period:
-        case "daily":
-            return DailyDataParams(**kwargs)
-        case "hourly":
-            return HourlyDataParams(**kwargs)
+def _data_params_class(time_period: TimePeriod) -> type[DataParams]:
+    match time_period:
+        case TimePeriod.DAILY:
+            return DailyDataParams
+        case TimePeriod.HOURLY:
+            return HourlyDataParams
         case _:
-            raise ValueError(f"Unknown period: {data_time_period}, kwargs: {kwargs}")
+            raise ValueError(f"Unknown period: {time_period}")
+
+
+def data_params_by_period(time_period: TimePeriod, **kwargs) -> DataParams:
+    params_class: type[DataParams] = _data_params_class(time_period)
+    return params_class(**kwargs)
 
 
 @dataclass
 class Request:
-    geo_params: NecessaryRequestParams
+    geo_params: RequiredRequestParams
     time_params: TimeRequestParams
-    data_params: list[type[DataParams]]
+    time_periods: list[TimePeriod]
     type: str = "GET"
     url_continuation: str = ""
 
-    def get_provided_params(self) -> Dict[str, Any]:
+    def provided_params(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
-        result |= asdict(self.geo_params)
+        result |= self.geo_params.as_params()
         result |= self.time_params.as_params()
         return result
 
-    def get_requested_params(self) -> Dict[str, tuple[str, ...]]:
+    def requested_params(self) -> Dict[str, tuple[str, ...]]:
         """
         Returns:
           {
@@ -100,22 +124,30 @@ class Request:
           }
         """
         result: Dict[str, tuple[str, ...]] = {}
-        for data_cls in self.data_params:
-            period = data_cls.get_time_period()
-            variable_names = tuple(f.name for f in fields(data_cls))
+        for period in self.time_periods:
+            data_cls: type[DataParams] = _data_params_class(period)
+            variable_names = data_cls.field_names()
             result[period] = variable_names
         return result
 
 
 @dataclass
-class ResponseParams:
+class ResponseSpecificParams:
     time: str
-    data_params: DataParams
-    _time_format: ClassVar[TimeFormat] = TimeFormat()
 
     @classmethod
-    def get_requested_params_except_data(cls):
-        return set(f.name for f in fields(cls) if f.name != "data_params")
+    def as_params_names(cls) -> tuple[str, ...]:
+        return tuple(f.name for f in fields(cls))
+
+
+@dataclass
+class ResponseParams(TimeFormat):
+    params: ResponseSpecificParams
+    data_params: DataParams
+
+    @classmethod
+    def specific_params(cls):
+        return ResponseSpecificParams.as_params_names()
 
 
 @dataclass
