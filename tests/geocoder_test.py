@@ -75,7 +75,7 @@ async def test_fetch_location_from_real_api_city_country_code_2():
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_fetch_location_to_real_api_city_country_code():
+async def test_fetch_location_to_real_api_city_country_code_2():
     coder = GeoCoder()
 
     coords = Coordinates(51.85, -1.89)
@@ -107,7 +107,7 @@ async def test_fetch_location_from_real_api_missing_city_raises_value_error():
         await coder.fetch_location_from(place)
 
 
-@pytest.mark.asyncio
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_from_success():
     coder = GeoCoder()
@@ -131,6 +131,7 @@ async def test_fetch_location_from_success():
     )
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_from_not_found():
     coder = GeoCoder()
@@ -149,6 +150,7 @@ async def test_fetch_location_from_not_found():
     )
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_from_timeout():
     coder = GeoCoder()
@@ -171,6 +173,7 @@ async def test_fetch_location_from_timeout():
     )
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_from_unavailable():
     coder = GeoCoder()
@@ -195,6 +198,7 @@ async def test_fetch_location_from_unavailable():
     )
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_to_success():
     coder = GeoCoder()
@@ -227,6 +231,7 @@ async def test_fetch_location_to_success():
     )
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_to_missing_city_raises_value_error():
     coder = GeoCoder()
@@ -251,6 +256,7 @@ async def test_fetch_location_to_missing_city_raises_value_error():
     assert "Could not extract place from address" in str(exc_info.value)
 
 
+@pytest.mark.component
 @pytest.mark.asyncio
 async def test_fetch_location_to_missing_country_code_raises_value_error():
     coder = GeoCoder()
