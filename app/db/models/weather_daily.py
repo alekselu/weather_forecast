@@ -1,5 +1,6 @@
-from sqlalchemy import Column, Integer, Float, Date, String, Index
+from sqlalchemy import Column, Integer, Float, Date, String, Index, ForeignKey
 from app.db.base import Base
+from sqlalchemy.orm import relationship
 
 
 class WeatherDaily(Base):
@@ -8,7 +9,9 @@ class WeatherDaily(Base):
     id = Column(Integer, primary_key=True)
 
     # ключи
-    city = Column(String, nullable=False, index=True)
+    city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
+    city = relationship("City")
+
     date = Column(Date, nullable=False, index=True)
 
     # температура
@@ -43,4 +46,4 @@ class WeatherDaily(Base):
     daylight_duration = Column(Float)
     weather_code = Column(Integer)
 
-    __table_args__ = (Index("ix_weather_city_date", "city", "date"),)
+    __table_args__ = (Index("ix_weather_city_date", "city_id", "date"),)
