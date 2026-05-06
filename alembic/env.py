@@ -15,7 +15,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.db.base import Base
-from app.db.models import weather_daily
+from app.db.models import weather_daily, city
 
 config = context.config
 
@@ -28,7 +28,6 @@ if DATABASE_URL is None:
     raise ValueError("DATABASE_URL is not set")
 
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
-print("set url")
 
 target_metadata = Base.metadata
 
