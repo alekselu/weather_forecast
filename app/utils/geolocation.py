@@ -19,7 +19,6 @@ class Coordinates:
 @dataclass
 class Place:
     name: str
-    type: str = "city"
     country_code: str = "ru"
 
 
@@ -87,7 +86,7 @@ class GeoCoder:
         loc: Location = await self._fetch_location_by(
             direction=Direction.FROM,
             query={
-                place.type: place.name,
+                "city": place.name,
                 "countrycodes": place.country_code,
             },
             exactly_one=True,
@@ -123,15 +122,14 @@ class GeoCoder:
             )
 
         return Place(
-            type=place_type,
             name=place_name,
             country_code=country_code,
         )
 
-    async def fetch_location_to(self, lat: float, long: float) -> Place:
+    async def fetch_location_to(self, coords: Coordinates) -> Place:
         loc: Location = await self._fetch_location_by(
             direction=Direction.TO,
-            query=(lat, long),
+            query=(coords.latitude, coords.longitude),
             exactly_one=True,
             addressdetails=True,
         )
