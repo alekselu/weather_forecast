@@ -3,10 +3,11 @@ import logging
 from app.router.messages.messages import (
     Request,
     TimeRequestParams,
-    NecessaryRequestParams,
+    RequiredRequestParams,
     ResponseData,
     DailyDataParams,
     HourlyDataParams,
+    TimePeriod,
 )
 from app.router.router import AsyncRouter
 
@@ -25,13 +26,13 @@ class CronLoggerAdapter(logging.LoggerAdapter):
 logger = CronLoggerAdapter(default_logger)
 
 
-def _process_request(
+async def _process_request(
     router: AsyncRouter,
-    necessary_params: NecessaryRequestParams,
+    necessary_params: RequiredRequestParams,
     time_params: TimeRequestParams,
 ) -> None:
     request = Request(
-        necessary_params, time_params, [DailyDataParams, HourlyDataParams]
+        necessary_params, time_params, [TimePeriod.DAILY, TimePeriod.HOURLY]
     )
 
     response: ResponseData = await router.send_request(request)
@@ -42,18 +43,20 @@ async def main():
     logger.info("script started")
 
     router = AsyncRouter()
-    necessary_params = NecessaryRequestParams(52.52, 13.41)
+    necessary_params = RequiredRequestParams(52.52, 13.41)
     time_params = TimeRequestParams(
         TimeRequestParams.str_to_date("2026-05-03"),
         TimeRequestParams.str_to_date("2026-05-05"),
     )
 
     try:
-        _process_request(router, necessary_params, time_params)
+        await _process_request(router, necessary_params, time_params)
     except Exception as e:
         logger.error(str(e))
 
     logger.info("script finished")
+
+    await router.aclose()
 
 
 asyncio.run(main())

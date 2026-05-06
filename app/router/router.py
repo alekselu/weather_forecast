@@ -7,7 +7,9 @@ from app.router.messages.messages import (
     ResponseData,
     DataParams,
     ResponseParams,
-    get_DataParams_by_period,
+    ResponseSpecificParams,
+    TimePeriod,
+    data_params_by_period,
 )
 
 
@@ -44,9 +46,9 @@ class AsyncRouter:
 
     def _build_request_params(self, request: Request) -> dict[str, Any]:
         params: Dict[str, Any] = {}
-        params |= request.get_provided_params()
+        params |= request.provided_params()
 
-        requested_params = request.get_requested_params()
+        requested_params = request.requested_params()
         formatted_params = {k: ",".join(v) for k, v in requested_params.items()}
         params |= formatted_params
         return params
@@ -64,7 +66,7 @@ class AsyncRouter:
         self, request: Request, response: httpx.Response
     ) -> ResponseData:
         payload = response.json()
-        requested_params = request.get_requested_params()
+        requested_params = request.requested_params()
         periods = requested_params.keys()
 
         parsed_items: list[ResponseParams] = []
@@ -75,23 +77,24 @@ class AsyncRouter:
 
             rows = dict_of_lists_to_list_of_dicts(payload, period)
             wanted_by_data_request = set(requested_params[period])
-            wanted_by_response_except_data = (
-                ResponseParams.get_requested_params_except_data()
-            )
+            wanted_by_response_specific_params = ResponseParams.specific_params()
 
             for row in rows:
                 row_payload = row[period]
                 filtered_data = {
                     k: v for k, v in row_payload.items() if k in wanted_by_data_request
                 }
-                filtered_except_data = {
+                filtered_specific = {
                     k: v
                     for k, v in row_payload.items()
-                    if k in wanted_by_response_except_data
+                    if k in wanted_by_response_specific_params
                 }
-                params: DataParams = get_DataParams_by_period(period, **filtered_data)
+                data_params: DataParams = data_params_by_period(
+                    TimePeriod(period), **filtered_data
+                )
+                params = ResponseSpecificParams(**filtered_specific)
                 parsed_items.append(
-                    ResponseParams(**filtered_except_data, data_params=params)
+                    ResponseParams(params=params, data_params=data_params)
                 )
 
         return ResponseData(data=parsed_items)
