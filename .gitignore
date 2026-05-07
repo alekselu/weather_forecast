@@ -1,0 +1,7 @@
+.venv
+.vscode
+pyproject.toml
+.env
+__*pycache__*
+.github
+.refact

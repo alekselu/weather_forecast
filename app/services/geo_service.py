@@ -1,8 +1,8 @@
 """
-GeoService: преобразует название города → (широта, долгота).
+GeoService: resolves city name → (latitude, longitude).
 
-v0: кэш в памяти + geopy (Nominatim).
-v1+: кэш, сохраняемый в таблицу PostgreSQL geo_cache.
+v0: in-memory cache + geopy (Nominatim).
+v1+: cache persisted to PostgreSQL geo_cache table.
 """
 
 from __future__ import annotations
@@ -18,7 +18,6 @@ logger = get_logger(__name__)
 
 @dataclass(frozen=True)
 class GeoLocation:
-    """Географические координаты города."""
     city: str
     latitude: float
     longitude: float
@@ -26,13 +25,13 @@ class GeoLocation:
 
 class GeoService:
     """
-    Преобразует названия городов в географические координаты.
+    Resolves city names to geographic coordinates.
 
-    Кэширует результаты в памяти, чтобы избежать повторных вызовов геокодирования.
-    Выбрасывает CityNotFoundError для неизвестных/неразрешимых городов.
+    Caches results in-memory to avoid repeated geocoding calls.
+    Raises CityNotFoundError for unknown/unresolvable cities.
     """
 
-    # Встроенный список известных городов для избежания геокодирования в тестах / офлайн-режиме
+    # Built-in known cities to avoid geocoding in tests / offline mode
     _KNOWN_CITIES: Dict[str, GeoLocation] = {
         "saint petersburg": GeoLocation("Saint Petersburg", 59.9343, 30.3351),
         "moscow": GeoLocation("Moscow", 55.7558, 37.6173),
@@ -43,26 +42,26 @@ class GeoService:
 
     def __init__(self, use_geocoder: bool = True) -> None:
         self._cache: Dict[str, GeoLocation] = {}
-        self._use_geocoder = use_geocoder  # может быть отключён в тестах
+        self._use_geocoder = use_geocoder
 
     def resolve(self, city: str) -> GeoLocation:
         """
-        Преобразует город в координаты.
-        Порядок поиска: кэш в памяти → встроенный список → геокодер Nominatim.
+        Resolve city to coordinates.
+        Lookup order: in-memory cache → built-in list → Nominatim geocoder.
         """
         key = city.strip().lower()
 
-        # 1. Кэш в памяти
+        # 1. In-memory cache
         if key in self._cache:
             return self._cache[key]
 
-        # 2. Встроенный список известных городов
+        # 2. Built-in known cities
         if key in self._KNOWN_CITIES:
             loc = self._KNOWN_CITIES[key]
             self._cache[key] = loc
             return loc
 
-        # 3. Геокодер (опционально, может быть отключён в тестах)
+        # 3. Geocoder (optional, may be disabled in tests)
         if self._use_geocoder:
             loc = self._geocode(city)
             self._cache[key] = loc
@@ -71,7 +70,7 @@ class GeoService:
         raise CityNotFoundError(city)
 
     def _geocode(self, city: str) -> GeoLocation:
-        """Вызывает Nominatim через geopy. Выбрасывает CityNotFoundError при ошибке."""
+        """Call Nominatim via geopy. Raises CityNotFoundError on failure."""
         try:
             from geopy.geocoders import Nominatim
             from geopy.exc import GeocoderServiceError, GeocoderTimedOut
@@ -102,10 +101,9 @@ class GeoService:
             raise CityNotFoundError(city) from exc
 
 
-# Синглтон на уровне модуля
+# Module-level singleton
 _geo_service = GeoService()
 
 
 def get_geo_service() -> GeoService:
-    """Возвращает глобальный сервис геокодирования (синглтон)."""
     return _geo_service

@@ -1,0 +1,22 @@
+fastapi[standard]
+psycopg[binary]
+geopy
+python-dotenv
+httpx
+geopy
+pytest
+pytest-asyncio
+aiohttp
+alembic
+once-py
+python-dotenv
+
+black
+isort
+
+
+# for ipynb
+# pandas
+# numpy
+# scikit-learn
+# xgboost

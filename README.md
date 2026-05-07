@@ -1,184 +1,116 @@
-# Weather Forecast API — v0
-
-Сервис прогноза средней температуры воздуха на следующий день.  
-**Текущая версия** использует заглушку (seasonal stub) вместо реальной ML-модели.
+Сервис прогнозирования средней температуры на следующий день для заданного города.
+Реализован на FastAPI с использованием PostgreSQL и Docker.
 
 ---
 
 ## Быстрый старт
 
+### 1. Клонировать репозиторий
+
 ```bash
-# 1. Установить зависимости
-pip install -r requirements.txt
-
-# 2. Запустить сервер
-uvicorn app.main:app --reload
-
-# 3. Проверить в браузере
-open http://localhost:8000/docs
+git clone https://github.com/alekselu/weather_forecast.git
+cd weather_forecast
 ```
 
 ---
 
-## API
+### 2. Настроить переменные окружения
 
-### `GET /forecast`
+В проекте есть файл `.env.example` с примером конфигурации.
 
-| Параметр | Тип    | Обязательный | Описание                              |
-|----------|--------|:------------:|---------------------------------------|
-| `city`   | string | ✅           | Название города                       |
-| `date`   | string | ❌           | Дата в формате `YYYY-MM-DD` (по умолчанию: завтра) |
+Скопируйте его:
 
-**Пример запроса:**
-```
-GET /forecast?city=Saint+Petersburg&date=2026-05-01
+```bash
+cp .env.example .env
 ```
 
-**Пример ответа:**
-```json
-{
-  "city": "Saint Petersburg",
-  "date": "2026-05-01",
-  "avg_temperature_c": 8.3,
-  "model_version": "stub-v0",
-  "confidence": null
-}
-```
+И при необходимости измените значения (например, логин/пароль БД).
 
-**Коды ошибок:**
-
-| HTTP | code                | Причина                            |
-|------|---------------------|------------------------------------|
-| 400  | `INVALID_INPUT`     | Пустая строка города               |
-| 404  | `CITY_NOT_FOUND`    | Город не найден                    |
-| 422  | `VALIDATION_ERROR`  | Неверный формат параметров         |
-| 503  | `MODEL_UNAVAILABLE` | Модель не загружена                |
-| 500  | `INTERNAL_ERROR`    | Непредвиденная ошибка сервера      |
-
-### `GET /health`
-
-```json
-{
-  "status": "ok",
-  "model_loaded": true,
-  "model_version": "stub-v0"
-}
-```
-
-Полная документация: http://localhost:8000/docs
+Рекомендуется использовать собственный `.env`, а не `.env.example`.
 
 ---
 
-## CLI
+### 3. Запуск через Docker Compose
 
 ```bash
-# Прогноз на завтра
-python weather_cli.py --city "Saint Petersburg"
-
-# Прогноз на конкретную дату
-python weather_cli.py --city Moscow --date 2026-07-15
-
-# JSON-вывод
-python weather_cli.py --city Kazan --json
-
-# Другой сервер
-python weather_cli.py --city Moscow --url http://myserver:8080
+docker-compose up --build
 ```
+
+Docker Compose поднимает:
+
+* backend (FastAPI)
+* PostgreSQL
+
+Контейнеры запускаются вместе как единая система.
 
 ---
 
-## Тестирование
+### 4. Проверка работы
 
-### pytest (рекомендуется)
+Откройте в браузере:
 
-```bash
-# Все тесты
-pytest
+* API:
 
-# С отчётом о покрытии
-pytest --cov=app --cov-report=term-missing
+  ```
+  http://localhost:8000
+  ```
 
-# Только юнит-тесты
-pytest tests/unit/
+* Проверка БД:
 
-# Только интеграционные тесты API
-pytest tests/integration/
-
-# Конкретный модуль
-pytest tests/unit/test_geo_service.py -v
-```
-
-### curl
-
-```bash
-# Прогноз (default date = завтра)
-curl "http://localhost:8000/forecast?city=Saint+Petersburg"
-
-# Прогноз на конкретную дату
-curl "http://localhost:8000/forecast?city=Moscow&date=2026-07-15"
-
-# Через v1-префикс
-curl "http://localhost:8000/api/v1/forecast?city=Kazan"
-
-# Health check
-curl "http://localhost:8000/health"
-
-# Ошибка: неизвестный город
-curl "http://localhost:8000/forecast?city=NonexistentCity"
-
-# Ошибка: неверный формат даты
-curl "http://localhost:8000/forecast?city=Moscow&date=15-07-2026"
-```
-
-### Postman
-
-Импортировать файл `tests/weather_forecast.postman_collection.json` в Postman.  
-Убедитесь, что переменная `base_url` = `http://localhost:8000`.  
-Запустить `Run Collection` для прогона всех сценариев.
+  ```
+  http://localhost:8000/health/db
+  ```
 
 ---
 
 ## Структура проекта
 
-```
-weather_forecast/
-├── app/
-│   ├── main.py                  # Точка входа, создание FastAPI-приложения
-│   ├── api/
-│   │   └── routes.py            # Эндпоинты: /forecast, /health
-│   ├── core/
-│   │   ├── config.py            # Настройки (pydantic-settings)
-│   │   ├── exceptions.py        # Доменные исключения
-│   │   └── logging.py           # Структурированные логи
-│   ├── ml/
-│   │   └── model_registry.py    # Реестр моделей + ModelStub + интерфейс BaseModel
-│   ├── schemas/
-│   │   └── forecast.py          # Pydantic схемы запроса/ответа
-│   └── services/
-│       ├── forecast_service.py  # Оркестрация: geo → features → predict
-│       └── geo_service.py       # Геокодирование города → (lat, lon)
-├── tests/
-│   ├── conftest.py              # Shared fixtures (TestClient, mock services)
-│   ├── unit/
-│   │   ├── test_geo_service.py
-│   │   ├── test_model_registry.py
-│   │   └── test_forecast_service.py
-│   ├── integration/
-│   │   └── test_api.py          # End-to-end тесты через TestClient
-│   └── weather_forecast.postman_collection.json
-├── weather_cli.py               # CLI-клиент
-├── architecture.md              # Диаграммы (Mermaid)
+```bash
+.
+├── app/             
+│   ├── main.py
+│   ├── db.py
+│   └── __init__.py
+├── docker-compose.yml
+├── Dockerfile
 ├── requirements.txt
-└── .env.example
+├── .env.example
+└── README.md
 ```
 
 ---
 
-## Замена заглушки на реальную модель (v1)
+## Технологии
 
-1. Реализовать `class XGBoostModel(BaseModel)` в `app/ml/model_registry.py`
-2. Загрузить артефакт модели при старте в `lifespan()` вместо `ModelStub()`
-3. Реализовать `FeatureEngineer` для получения лагов из БД
-4. Раскомментировать вызов к БД в `ForecastService.get_forecast()`
+* FastAPI
+* PostgreSQL
+* Docker / Docker Compose
 
-Интерфейс `BaseModel` и `ModelRegistry` не меняются — API остаётся совместимым.
+---
+
+## 🛠 Основные команды
+
+```bash
+# запуск
+docker-compose up --build
+
+# остановка
+docker-compose down
+
+# логи
+docker-compose logs
+```
+
+---
+
+## Примечания
+
+* При первом запуске база данных инициализируется автоматически
+* Данные БД сохраняются в volume и не теряются при перезапуске
+* Для разработки используется hot-reload (изменения кода применяются без пересборки контейнера)
+
+---
+
+## Предложение изменений
+
+При нахождении ошибки в работе приложения или необходимости внедрения новой функциональности, откройте [issue](https://github.com/alekselu/weather_forecast/issues).

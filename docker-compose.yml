@@ -1,0 +1,78 @@
+services:
+  db:
+    image: postgres:15
+    container_name: weather_db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1 -p 5432" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: weather_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: ${POSTGRES_HOST}
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_PORT: ${POSTGRES_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: app/frontend-app
+      dockerfile: Dockerfile
+    container_name: weather_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./app/frontend-app:/app
+      - /app/node_modules
+
+  cron:
+    build:
+      context: .
+      dockerfile: docker/cron/Dockerfile
+    container_name: cron_app
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: ${POSTGRES_PORT}
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+volumes:
+  postgres_data:
+

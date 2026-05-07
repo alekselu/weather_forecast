@@ -1,7 +1,7 @@
 """
 ForecastService: orchestrates geo resolution → feature building → model prediction.
 
-Это центральный компонент бизнес-логики, который вызывает API слой.
+This is the central business-logic component that the API layer calls.
 """
 
 from __future__ import annotations
@@ -18,37 +18,37 @@ logger = get_logger(__name__)
 
 
 class ForecastService:
-    """Сервис прогнозирования: геокодирование → построение признаков → предсказание модели."""
-
     def __init__(self, geo_service: GeoService, model_registry: ModelRegistry) -> None:
         self._geo = geo_service
         self._registry = model_registry
 
-    def get_forecast(self, city: str, forecast_date: date | None = None) -> ForecastResponse:
+    def get_forecast(
+        self, city: str, forecast_date: date | None = None
+    ) -> ForecastResponse:
         """
-        Возвращает прогноз температуры для указанного города и даты.
+        Return a temperature forecast for the given city and date.
 
         Args:
-            city: Человекочитаемое название города.
-            forecast_date: Целевая дата. По умолчанию — завтрашний день (время сервера).
+            city: Human-readable city name.
+            forecast_date: Target date. Defaults to tomorrow (server time).
 
         Returns:
-            ForecastResponse с прогнозируемой средней температурой.
+            ForecastResponse with predicted avg temperature.
 
         Raises:
-            CityNotFoundError: Если город не удаётся геокодировать.
-            ModelNotAvailableError: Если не загружена ни одна модель.
-            InsufficientDataError: Если отсутствуют исторические данные (v1+).
+            CityNotFoundError: If the city cannot be geocoded.
+            ModelNotAvailableError: If no model is loaded.
+            InsufficientDataError: If historical data is missing (v1+).
         """
         target_date = forecast_date or (date.today() + timedelta(days=1))
 
         logger.info("forecast_requested", city=city, target_date=str(target_date))
 
-        # 1. Преобразуем город в координаты
+        # 1. Resolve city → coordinates
         location = self._geo.resolve(city)
 
-        # 2. Строим вектор признаков
-        #    v0: заполнены только широта/долгота + дата; лаги заполняются из БД в v1+
+        # 2. Build feature vector
+        #    v0: only lat/lon + date are populated; lags filled by DB in v1+
         doy = target_date.timetuple().tm_yday
         features = FeatureVector(
             city=location.city,
@@ -60,9 +60,9 @@ class ForecastService:
             day_of_week=target_date.weekday(),
         )
 
-        # 3. Выполняем предсказание
+        # 3. Run prediction
         if not self._registry.is_ready:
-            raise ModelNotAvailableError("В реестре нет загруженной модели")
+            raise ModelNotAvailableError("No model loaded in registry")
 
         predicted_temp = self._registry.predict(features)
 

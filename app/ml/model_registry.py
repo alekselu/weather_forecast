@@ -1,9 +1,9 @@
 """
-ML слой: абстрактный интерфейс + заглушка (stub).
+ML layer: abstract interface + stub implementation.
 
-Заглушка возвращает детерминированную сезонную оценку, чтобы API
-был полностью работоспособен до того, как будет готова реальная модель XGBoost/LightGBM.
-Замените ModelStub на реальный ModelAdapter, когда появится артефакт модели.
+The stub returns a deterministic seasonal estimate so the API
+is fully functional before the real XGBoost/LightGBM model is ready.
+Replace ModelStub with a real ModelAdapter when the model artifact exists.
 """
 
 from __future__ import annotations
@@ -21,12 +21,13 @@ logger = get_logger(__name__)
 
 @dataclass
 class FeatureVector:
-    """Входные признаки для предсказания температуры."""
+    """Input features for temperature prediction."""
+
     city: str
     forecast_date: date
     lat: float
     lon: float
-    # Заполняется после запроса к БД (может быть None для заглушки)
+    # Populated after DB query (may be None for stub)
     lag_1: Optional[float] = None
     lag_2: Optional[float] = None
     lag_3: Optional[float] = None
@@ -40,33 +41,35 @@ class FeatureVector:
 
 
 class BaseModel(ABC):
-    """Абстрактная база для всех моделей прогнозирования."""
+    """Abstract base for all forecast models."""
 
     @property
     @abstractmethod
-    def version(self) -> str: ...
+    def version(self) -> str:
+        ...
 
     @property
     @abstractmethod
-    def is_ready(self) -> bool: ...
+    def is_ready(self) -> bool:
+        ...
 
     @abstractmethod
     def predict(self, features: FeatureVector) -> float:
-        """Возвращает прогнозируемую среднюю температуру в °C."""
+        """Return predicted avg temperature in °C."""
         ...
 
 
 class ModelStub(BaseModel):
     """
-    Модель-заглушка — возвращает наивную сезонную оценку, основанную на широте
-    и синусоидальной аппроксимации дня в году.
+    Stub model — returns a naive seasonal estimate based on latitude and
+    day-of-year sinusoidal approximation.
 
-    Санкт-Петербург (широта ≈ 60° с.ш.):
-        Средняя температура в январе ≈ -5°C, в июле ≈ +18°C → амплитуда ≈ 11.5, центр ≈ 6.5
-    Общая формула: T = base + amplitude * sin((doy - 80) * 2π / 365)
-    где base и amplitude выводятся из широты.
+    Saint Petersburg (lat≈60°N):
+        Jan mean ≈ -5°C, Jul mean ≈ +18°C  → amplitude ≈ 11.5, centre ≈ 6.5
+    Generic formula: T = base + amplitude * sin((doy - 80) * 2π / 365)
+    where base and amplitude are derived from latitude.
 
-    Это намеренно просто и явно помечено как заглушка.
+    This is intentionally simple and clearly labelled as a stub.
     """
 
     VERSION = "stub-v0"
@@ -77,15 +80,15 @@ class ModelStub(BaseModel):
 
     @property
     def is_ready(self) -> bool:
-        return True  # заглушка всегда готова
+        return True  # stub is always ready
 
     def predict(self, features: FeatureVector) -> float:
         doy = features.day_of_year or features.forecast_date.timetuple().tm_yday
         lat = features.lat
 
-        # Грубые сезонные параметры на основе широты
-        # На экваторе: base=25, amplitude=5; на 60° с.ш.: base=6, amplitude=14
-        t = max(0.0, min(1.0, (lat - 0) / 90))  # 0..1 доля широты от экватора к полюсу
+        # Rough latitude-based seasonal parameters
+        # At equator: base=25, amplitude=5; at 60°N: base=6, amplitude=14
+        t = max(0.0, min(1.0, (lat - 0) / 90))  # 0..1 pole fraction
         base = 25.0 - 19.0 * t
         amplitude = 5.0 + 9.0 * t
 
@@ -105,25 +108,25 @@ class ModelStub(BaseModel):
 
 class ModelRegistry:
     """
-    Потокобезопасный реестр моделей с поддержкой атомарной горячей замены (hot-swap).
+    Thread-safe model registry with atomic hot-swap support.
 
-    Использование:
+    Usage:
         registry = ModelRegistry()
-        registry.load(ModelStub())   # при запуске
+        registry.load(ModelStub())   # on startup
         prediction = registry.predict(features)
-        registry.swap(new_model)     # во время дообучения
+        registry.swap(new_model)     # during retraining
     """
 
     def __init__(self) -> None:
         self._model: Optional[BaseModel] = None
 
     def load(self, model: BaseModel) -> None:
-        """Загрузить начальную модель (вызывать при запуске)."""
+        """Load initial model (call on startup)."""
         self._model = model
         logger.info("model_loaded", version=model.version)
 
     def swap(self, new_model: BaseModel) -> None:
-        """Атомарно заменить текущую модель (горячая замена во время дообучения)."""
+        """Atomically replace the current model (hot-swap during retraining)."""
         old_version = self._model.version if self._model else "none"
         self._model = new_model
         logger.info("model_swapped", old=old_version, new=new_model.version)
@@ -138,15 +141,15 @@ class ModelRegistry:
 
     def predict(self, features: FeatureVector) -> float:
         from app.core.exceptions import ModelNotAvailableError
+
         if not self.is_ready:
-            raise ModelNotAvailableError("В реестре нет загруженной модели")
+            raise ModelNotAvailableError("Registry has no loaded model")
         return self._model.predict(features)  # type: ignore[union-attr]
 
 
-# Синглтон реестра — внедряется через зависимость FastAPI
+# Singleton registry — injected via FastAPI dependency
 _registry = ModelRegistry()
 
 
 def get_model_registry() -> ModelRegistry:
-    """Возвращает глобальный реестр моделей (синглтон)."""
     return _registry

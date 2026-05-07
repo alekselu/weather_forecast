@@ -1,10 +1,10 @@
 """
-Общие pytest фикстуры для всех слоёв тестирования.
+Shared pytest fixtures for all test layers.
 
-Принципы проектирования:
-- Каждый тест получает свежий экземпляр приложения (нет общего состояния между тестами).
-- Реестр моделей предварительно загружен с ModelStub (нет внешних зависимостей).
-- GeoService использует офлайн-режим (без реальных вызовов Nominatim во время тестов).
+Design principles:
+- Each test gets a fresh app instance (no shared state between tests).
+- The model registry is pre-loaded with ModelStub (no external dependencies).
+- GeoService uses offline mode (no real Nominatim calls during tests).
 """
 
 from __future__ import annotations
@@ -18,11 +18,12 @@ from app.services.geo_service import GeoService
 from app.services.forecast_service import ForecastService
 
 
-# ── Изолированные фикстуры сервисов ────────────────────────────────────────────────
+# ── Isolated service fixtures ────────────────────────────────────────────────
+
 
 @pytest.fixture
 def model_registry() -> ModelRegistry:
-    """Свежий реестр с загруженной моделью-заглушкой."""
+    """Fresh registry with stub model loaded."""
     registry = ModelRegistry()
     registry.load(ModelStub())
     return registry
@@ -30,29 +31,31 @@ def model_registry() -> ModelRegistry:
 
 @pytest.fixture
 def empty_registry() -> ModelRegistry:
-    """Реестр БЕЗ загруженной модели — симулирует холодный старт / отказ модели."""
+    """Registry with NO model loaded — simulates cold start / model failure."""
     return ModelRegistry()
 
 
 @pytest.fixture
 def geo_service() -> GeoService:
-    """GeoService с отключённым геокодером — использует только встроенный список известных городов."""
+    """GeoService with geocoder disabled — uses only built-in known cities."""
     return GeoService(use_geocoder=False)
 
 
 @pytest.fixture
-def forecast_service(geo_service: GeoService, model_registry: ModelRegistry) -> ForecastService:
-    """Сервис прогнозирования с внедрёнными зависимостями."""
+def forecast_service(
+    geo_service: GeoService, model_registry: ModelRegistry
+) -> ForecastService:
     return ForecastService(geo_service=geo_service, model_registry=model_registry)
 
 
-# ── Тестовый клиент FastAPI ──────────────────────────────────────────────────────
+# ── FastAPI test client ──────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def client(model_registry: ModelRegistry, geo_service: GeoService) -> TestClient:
     """
-    Возвращает TestClient с переопределёнными зависимостями.
-    Это позволяет избежать любых побочных эффектов при запуске (БД, реальный геокодер и т.д.),
+    Return a TestClient with dependency overrides.
+    This avoids any startup side-effects (DB, real geocoder, etc.)
     """
     from app.main import create_app
     from app.ml.model_registry import get_model_registry
@@ -67,8 +70,10 @@ def client(model_registry: ModelRegistry, geo_service: GeoService) -> TestClient
 
 
 @pytest.fixture
-def client_no_model(empty_registry: ModelRegistry, geo_service: GeoService) -> TestClient:
-    """TestClient, в котором в реестре моделей не загружена ни одна модель."""
+def client_no_model(
+    empty_registry: ModelRegistry, geo_service: GeoService
+) -> TestClient:
+    """TestClient where the model registry has no model loaded."""
     from app.main import create_app
     from app.ml.model_registry import get_model_registry
     from app.services.geo_service import get_geo_service
@@ -81,11 +86,19 @@ def client_no_model(empty_registry: ModelRegistry, geo_service: GeoService) -> T
         yield c
 
 
-# ── Вспомогательные утилиты ──────────────────────────────────────────────────
+# ── Helpers ──────────────────────────────────────────────────────────────────
 
-# Вычисляем дату "завтра" с корректным переходом через конец месяца / года
-TOMORROW = str(date.today().replace(day=date.today().day + 1)
-               if date.today().day < 28
-               else (date.today().replace(month=date.today().month + 1, day=1)
-                     if date.today().month < 12
-                     else date.today().replace(year=date.today().year + 1, month=1, day=1)))
+TOMORROW = str(
+    date.today().replace(day=date.today().day + 1)
+    if date.today().day < 28
+    else (
+        date.today().replace(month=date.today().month + 1, day=1)
+        if date.today().month < 12
+        else date.today().replace(year=date.today().year + 1, month=1, day=1)
+    )
+)
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))

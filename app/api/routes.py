@@ -1,5 +1,5 @@
 """
-Маршруты API: GET /forecast, GET /health
+API routes: GET /forecast, GET /health
 """
 
 from datetime import date
@@ -23,27 +23,28 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-# ── Фабрики зависимостей ─────────────────────────────────────────────────────
+# ── Dependency factories ─────────────────────────────────────────────────────
+
 
 def get_forecast_service(
     geo: Annotated[GeoService, Depends(get_geo_service)],
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
 ) -> ForecastService:
-    """Возвращает сервис прогнозирования с внедренными зависимостями."""
     return ForecastService(geo_service=geo, model_registry=registry)
 
 
-# ── Эндпоинты ────────────────────────────────────────────────────────────────
+# ── Endpoints ────────────────────────────────────────────────────────────────
+
 
 @router.get(
     "/forecast",
     response_model=ForecastResponse,
-    summary="Получить прогноз температуры для города",
+    summary="Get temperature forecast for a city",
     responses={
-        200: {"description": "Успешный прогноз", "model": ForecastResponse},
-        400: {"description": "Неверный ввод", "model": ErrorResponse},
-        404: {"description": "Город не найден", "model": ErrorResponse},
-        503: {"description": "Модель недоступна", "model": ErrorResponse},
+        200: {"description": "Successful forecast", "model": ForecastResponse},
+        400: {"description": "Invalid input", "model": ErrorResponse},
+        404: {"description": "City not found", "model": ErrorResponse},
+        503: {"description": "Model not available", "model": ErrorResponse},
     },
 )
 def get_forecast(
@@ -52,7 +53,7 @@ def get_forecast(
         Query(
             min_length=1,
             max_length=100,
-            description="Название города (например 'Saint Petersburg')",
+            description="City name (e.g. 'Saint Petersburg')",
             example="Saint Petersburg",
         ),
     ],
@@ -60,25 +61,29 @@ def get_forecast(
         Optional[date],
         Query(
             alias="date",
-            description="Целевая дата (ГГГГ-ММ-ДД). По умолчанию — завтрашний день.",
+            description="Target date (YYYY-MM-DD). Defaults to tomorrow.",
             example="2026-04-27",
         ),
     ] = None,
     service: ForecastService = Depends(get_forecast_service),
 ) -> ForecastResponse:
     """
-    Возвращает прогнозируемую среднюю температуру (°C) для указанного города.
+    Return predicted average temperature (°C) for the given city.
 
-    - **city**: строка с названием города (геокодирование через Nominatim)
-    - **date**: опциональная дата прогноза; по умолчанию — завтра
+    - **city**: city name string (geocoded via Nominatim)
+    - **date**: optional forecast date; defaults to tomorrow
 
-    Ошибки возвращаются в виде структурированного JSON с полями `error`, `detail`, `code`.
+    Errors are returned as structured JSON with `error`, `detail`, `code` fields.
     """
     city = city.strip()
     if not city:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "Ошибка валидации", "detail": "название города не может быть пустым", "code": "INVALID_INPUT"},
+            detail={
+                "error": "Validation error",
+                "detail": "city must not be blank",
+                "code": "INVALID_INPUT",
+            },
         )
 
     try:
@@ -88,14 +93,22 @@ def get_forecast(
         logger.warning("city_not_found", city=exc.city)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": "Город не найден", "detail": str(exc), "code": "CITY_NOT_FOUND"},
+            detail={
+                "error": "City not found",
+                "detail": str(exc),
+                "code": "CITY_NOT_FOUND",
+            },
         )
 
     except ModelNotAvailableError as exc:
         logger.error("model_unavailable", reason=exc.reason)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={"error": "Модель недоступна", "detail": str(exc), "code": "MODEL_UNAVAILABLE"},
+            detail={
+                "error": "Model not available",
+                "detail": str(exc),
+                "code": "MODEL_UNAVAILABLE",
+            },
         )
 
     except InsufficientDataError as exc:
@@ -108,7 +121,7 @@ def get_forecast(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
-                "error": "Недостаточно исторических данных",
+                "error": "Insufficient historical data",
                 "detail": str(exc),
                 "code": "INSUFFICIENT_DATA",
             },
@@ -118,19 +131,23 @@ def get_forecast(
         logger.exception("unexpected_error", error=str(exc))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"error": "Внутренняя ошибка сервера", "detail": "Произошла непредвиденная ошибка", "code": "INTERNAL_ERROR"},
+            detail={
+                "error": "Internal server error",
+                "detail": "Unexpected error occurred",
+                "code": "INTERNAL_ERROR",
+            },
         )
 
 
 @router.get(
     "/health",
     response_model=HealthResponse,
-    summary="Проверка работоспособности",
+    summary="Health check",
 )
 def health_check(
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
 ) -> HealthResponse:
-    """Возвращает статус работоспособности приложения и состояние модели."""
+    """Returns application health and model status."""
     return HealthResponse(
         status="ok",
         model_loaded=registry.is_ready,
