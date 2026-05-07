@@ -40,6 +40,23 @@ services:
       - "8000:8000"
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: app/frontend-app
+      dockerfile: Dockerfile
+    container_name: weather_frontend
+    restart: always
+    ports:
+      - "5173:5173"
+    depends_on:
+      - app
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./app/frontend-app:/app
+      - /app/node_modules
+
   cron:
     build:
       context: .
