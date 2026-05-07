@@ -5,6 +5,7 @@ from app import db
 from datetime import date
 from app.core.logging import setup_logging
 from app.utils.geolocation import GeoCoder
+from app.services.forecast import Forecast
 
 setup_logging()
 import logging
@@ -55,4 +56,5 @@ async def get_forecast(
         result["coords"] = str(e)
     result["country_code"] = country_code
     result["params"] = params
+    result["temperature_2m_mean"] = Forecast().predict(time)
     return result

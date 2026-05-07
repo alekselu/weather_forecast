@@ -9,18 +9,19 @@ class ModelSelector:
 
     def train(self, X, y):
         # 1. обучаем XGBoost
-        xgb = XGBWeatherModel()
-        xgb_score = evaluate_model(xgb, X, y)
+        # xgb = XGBWeatherModel()
+        # xgb_score = evaluate_model(xgb, X, y)
 
-        # 2. обучаем SARIMAX
-        sarimax = SARIMAXModel()
-        sarimax_score = evaluate_model(sarimax, X, y)
+        # # 2. обучаем SARIMAX
+        # sarimax = SARIMAXModel()
+        # sarimax_score = evaluate_model(sarimax, X, y)
 
-        # 3. сравнение
-        if sarimax_score < xgb_score:
-            self.model = sarimax
-        else:
-            self.model = xgb
+        # # 3. сравнение
+        # if sarimax_score < xgb_score:
+        #     self.model = sarimax
+        # else:
+        #     self.model = xgb
+        self.model = SARIMAXModel()
 
         # финальное обучение
         self.model.fit(X, y)

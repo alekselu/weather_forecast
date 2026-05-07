@@ -10,6 +10,11 @@ aiohttp
 alembic
 once-py
 python-dotenv
+pandas
+numpy
+xgboost
+scikit-learn
+statsmodels
 
 black
 isort

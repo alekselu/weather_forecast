@@ -22,6 +22,7 @@ class SARIMAXModel(BaseModel):
     def predict(self, X):
         return self.res.forecast(
             len(X),
+            exog=X,
         )
 
     def update(self, X, y):
