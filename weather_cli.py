@@ -11,6 +11,12 @@ Usage:
 import argparse
 import sys
 from datetime import date, datetime
+from app.core.logging import setup_logging
+
+setup_logging()
+import logging
+
+logger = logging.getLogger(__name__)
 
 try:
     import httpx
@@ -38,6 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Forecast date in YYYY-MM-DD format (default: tomorrow)",
     )
+    parser.add_argument("--params", "-p", nargs="*", type=str)
     parser.add_argument(
         "--url",
         default=DEFAULT_BASE_URL,
@@ -56,10 +63,14 @@ def format_temperature(temp: float) -> str:
     return f"{sign}{temp:.1f}°C"
 
 
-def fetch_forecast(base_url: str, city: str, target_date: str | None) -> dict:
+def fetch_forecast(
+    base_url: str, city: str, target_date: str | None, target_params: list[str]
+) -> dict:
     params: dict = {"city": city}
     if target_date:
-        params["date"] = target_date
+        params["time"] = target_date
+    if target_params:
+        params["params"] = target_params
 
     with httpx.Client(timeout=10.0) as client:
         response = client.get(f"{base_url}/forecast", params=params)
@@ -101,6 +112,7 @@ def main() -> None:
             base_url=args.url.rstrip("/"),
             city=args.city,
             target_date=args.date,
+            target_params=args.params,
         )
     except httpx.ConnectError:
         print(f"Error: cannot connect to API at {args.url}", file=sys.stderr)
@@ -116,15 +128,7 @@ def main() -> None:
         print(json.dumps(data, indent=2))
         return
 
-    city = data["city"]
-    forecast_date = data["date"]
-    temp = data["avg_temperature_c"]
-    model = data.get("model_version", "unknown")
-
-    print(f"\n📍 {city}")
-    print(f"📅 {forecast_date}")
-    print(f"🌡️  {format_temperature(temp)}")
-    print(f"   (model: {model})\n")
+    logger.info(data)
 
 
 if __name__ == "__main__":
