@@ -17,7 +17,7 @@ class Coordinates:
 
 
 @dataclass
-class Place:
+class City:
     name: str
     country_code: str = "ru"
 
@@ -81,7 +81,7 @@ class GeoCoder:
 
     async def fetch_location_from(
         self,
-        place: Place,
+        place: City,
     ) -> Coordinates:
         loc: Location = await self._fetch_location_by(
             direction=Direction.FROM,
@@ -95,7 +95,7 @@ class GeoCoder:
         return Coordinates(float(loc.latitude), float(loc.longitude))
 
     @staticmethod
-    def _extract_city_and_country_code(location: Location | None) -> Place:
+    def _extract_city_and_country_code(location: Location | None) -> City:
         if location is None:
             raise ValueError("Got empty location")
 
@@ -111,12 +111,12 @@ class GeoCoder:
                 f"Could not extract country code from address: {address!r}"
             )
 
-        return Place(
+        return City(
             name=place_name,
             country_code=country_code,
         )
 
-    async def fetch_location_to(self, coords: Coordinates) -> Place:
+    async def fetch_location_to(self, coords: Coordinates) -> City:
         loc: Location = await self._fetch_location_by(
             direction=Direction.TO,
             query=(coords.latitude, coords.longitude),

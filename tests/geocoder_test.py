@@ -4,16 +4,16 @@ from unittest.mock import AsyncMock
 from dataclasses import astuple
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
-from app.utils.geolocation import GeoCoder, Direction, Coordinates, Place
+from app.utils.geolocation import GeoCoder, Direction, Coordinates, City
 
 TEST_CASES = [
-    (Place("Berlin", "de"), Coordinates(52.52, 13.40)),
-    (Place("Cotswold", "gb"), Coordinates(51.85, -1.89)),
-    (Place("Moscow", "ru"), Coordinates(55.75, 37.62)),
+    (City("Berlin", "de"), Coordinates(52.52, 13.40)),
+    (City("Cotswold", "gb"), Coordinates(51.85, -1.89)),
+    (City("Moscow", "ru"), Coordinates(55.75, 37.62)),
 ]
 
 
-def ids(x: tuple[Place, Coordinates]):
+def ids(x: tuple[City, Coordinates]):
     return f"{x[0].name}_{x[0].country_code}_to_{x[1].latitude}_{x[1].longitude}"
 
 
@@ -50,7 +50,7 @@ async def test_fetch_location_to_real_api(case):
 async def test_fetch_location_from_real_api_missing_city_raises_value_error():
     coder = GeoCoder()
 
-    place = Place(
+    place = City(
         name="DefinitelyNotARealCityName123456789",
         country_code="de",
     )
@@ -66,7 +66,7 @@ async def test_fetch_location_from_success():
     loc = type("Loc", (), {"latitude": 55.7558, "longitude": 37.6176})()
 
     coder._fetch_location_by = AsyncMock(return_value=loc)
-    place = Place("Moscow", "ru")
+    place = City("Moscow", "ru")
 
     coords: Coordinates = await coder.fetch_location_from(place)
 
@@ -90,7 +90,7 @@ async def test_fetch_location_from_not_found():
     coder._fetch_location_by = AsyncMock(return_value=None)
 
     with pytest.raises(AttributeError):
-        await coder.fetch_location_from(Place("NonExistentCity"))
+        await coder.fetch_location_from(City("NonExistentCity"))
 
     coder._fetch_location_by.assert_awaited_once_with(
         direction=Direction.FROM,
@@ -108,7 +108,7 @@ async def test_fetch_location_from_timeout():
     coder = GeoCoder()
     coder._fetch_location_by = AsyncMock(side_effect=GeocoderTimedOut("Timeout"))
 
-    place = Place("Moscow")
+    place = City("Moscow")
 
     with pytest.raises(GeocoderTimedOut) as exc_info:
         await coder.fetch_location_from(place)
@@ -133,7 +133,7 @@ async def test_fetch_location_from_unavailable():
         side_effect=GeocoderUnavailable("Service down")
     )
 
-    place = Place("Moscow")
+    place = City("Moscow")
 
     with pytest.raises(GeocoderUnavailable) as exc_info:
         await coder.fetch_location_from(place)
@@ -170,7 +170,7 @@ async def test_fetch_location_to_success():
 
     coder._fetch_location_by = AsyncMock(return_value=loc)
 
-    place: Place = await coder.fetch_location_to(Coordinates(55.7558, 37.6176))
+    place: City = await coder.fetch_location_to(Coordinates(55.7558, 37.6176))
 
     assert place.name == "Moscow"
     assert place.country_code == "ru"
@@ -180,6 +180,7 @@ async def test_fetch_location_to_success():
         query=(55.7558, 37.6176),
         exactly_one=True,
         addressdetails=True,
+        language="en",
     )
 
 
