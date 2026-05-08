@@ -12,13 +12,13 @@ from app.core.exceptions import (
     InsufficientDataError,
     ModelNotAvailableError,
 )
-from app.core.logging import get_logger
 from app.ml.model_registry import ModelRegistry, get_model_registry
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
 from app.services.forecast_service import ForecastService
 from app.services.geo_service import GeoService, get_geo_service
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 

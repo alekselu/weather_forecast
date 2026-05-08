@@ -11,9 +11,9 @@ from dataclasses import dataclass
 from typing import Dict, Optional
 
 from app.core.exceptions import CityNotFoundError
-from app.core.logging import get_logger
+import logging
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)

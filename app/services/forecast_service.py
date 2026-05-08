@@ -9,12 +9,13 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from app.core.exceptions import ModelNotAvailableError
-from app.core.logging import get_logger
 from app.ml.model_registry import FeatureVector, ModelRegistry
 from app.schemas.forecast import ForecastResponse
 from app.services.geo_service import GeoService
+import logging
 
-logger = get_logger(__name__)
+
+logger = logging.getLogger(__name__)
 
 
 class ForecastService:

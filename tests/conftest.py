@@ -16,6 +16,8 @@ from fastapi.testclient import TestClient
 from app.ml.model_registry import ModelRegistry, ModelStub
 from app.services.geo_service import GeoService
 from app.services.forecast_service import ForecastService
+import sys
+from pathlib import Path
 
 
 # ── Isolated service fixtures ────────────────────────────────────────────────
@@ -97,8 +99,5 @@ TOMORROW = str(
         else date.today().replace(year=date.today().year + 1, month=1, day=1)
     )
 )
-
-import sys
-from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -13,10 +13,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
+import logging
+from app.core.exceptions import ModelNotAvailableError
 
-from app.core.logging import get_logger
-
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -41,22 +41,26 @@ class FeatureVector:
 
 
 class BaseModel(ABC):
-    """Abstract base for all forecast models."""
-
-    @property
     @abstractmethod
-    def version(self) -> str:
-        ...
-
-    @property
-    @abstractmethod
-    def is_ready(self) -> bool:
-        ...
+    def fit(self, df: pd.DataFrame):
+        pass
 
     @abstractmethod
-    def predict(self, features: FeatureVector) -> float:
-        """Return predicted avg temperature in °C."""
-        ...
+    def predict(self, history: pd.DataFrame, horizon: int):
+        pass
+
+    @abstractmethod
+    def update(self, new_data: pd.DataFrame):
+        pass
+
+    @abstractmethod
+    def save(self, path: str):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def load(cls, path: str):
+        pass
 
 
 class ModelStub(BaseModel):
@@ -108,8 +112,6 @@ class ModelStub(BaseModel):
 
 class ModelRegistry:
     """
-    Thread-safe model registry with atomic hot-swap support.
-
     Usage:
         registry = ModelRegistry()
         registry.load(ModelStub())   # on startup
@@ -139,15 +141,12 @@ class ModelRegistry:
     def current_version(self) -> str:
         return self._model.version if self._model else "none"
 
-    def predict(self, features: FeatureVector) -> float:
-        from app.core.exceptions import ModelNotAvailableError
-
+    def predict(self, history: pd.DataFrame, horizon: int) -> float:
         if not self.is_ready:
             raise ModelNotAvailableError("Registry has no loaded model")
-        return self._model.predict(features)  # type: ignore[union-attr]
+        return self._model.predict(features)
 
 
-# Singleton registry — injected via FastAPI dependency
 _registry = ModelRegistry()
 
 

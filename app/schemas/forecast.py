@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class ForecastRequest(BaseModel):
     city: str = Field(..., min_length=1, max_length=100, examples=["Saint Petersburg"])
-    date: Optional[date] = Field(
+    date_: Optional[date] = Field(
         default=None,
         description="Forecast date (YYYY-MM-DD). Defaults to tomorrow.",
         examples=["2026-04-27"],
@@ -29,7 +29,7 @@ class ForecastRequest(BaseModel):
 
 class ForecastResponse(BaseModel):
     city: str
-    date: date
+    date_: date
     avg_temperature_c: float = Field(
         ...,
         description="Predicted average temperature in °C",
