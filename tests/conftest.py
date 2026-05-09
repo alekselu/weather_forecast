@@ -14,7 +14,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.ml.model_registry import ModelRegistry, ModelStub
-from app.services.geo_service import GeoService
+from app.utils.geolocation import GeoCoder
 from app.services.forecast_service import ForecastService
 import sys
 from pathlib import Path
@@ -38,51 +38,49 @@ def empty_registry() -> ModelRegistry:
 
 
 @pytest.fixture
-def geo_service() -> GeoService:
-    """GeoService with geocoder disabled — uses only built-in known cities."""
-    return GeoService(use_geocoder=False)
+def geo_coder() -> GeoCoder:
+    """GeoCoder service."""
+    return GeoCoder()
 
 
 @pytest.fixture
 def forecast_service(
-    geo_service: GeoService, model_registry: ModelRegistry
+    geo_coder: GeoCoder, model_registry: ModelRegistry
 ) -> ForecastService:
-    return ForecastService(geo_service=geo_service, model_registry=model_registry)
+    return ForecastService(geo_coder=geo_coder, model_registry=model_registry)
 
 
 # ── FastAPI test client ──────────────────────────────────────────────────────
 
 
 @pytest.fixture
-def client(model_registry: ModelRegistry, geo_service: GeoService) -> TestClient:
+def client(model_registry: ModelRegistry, geo_coder: GeoCoder) -> TestClient:
     """
     Return a TestClient with dependency overrides.
     This avoids any startup side-effects (DB, real geocoder, etc.)
     """
     from app.main import create_app
     from app.ml.model_registry import get_model_registry
-    from app.services.geo_service import get_geo_service
+    from app.utils.geolocation import get_geo_coder
 
     app = create_app()
     app.dependency_overrides[get_model_registry] = lambda: model_registry
-    app.dependency_overrides[get_geo_service] = lambda: geo_service
+    app.dependency_overrides[get_geo_coder] = lambda: geo_coder
 
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c
 
 
 @pytest.fixture
-def client_no_model(
-    empty_registry: ModelRegistry, geo_service: GeoService
-) -> TestClient:
+def client_no_model(empty_registry: ModelRegistry, geo_coder: GeoCoder) -> TestClient:
     """TestClient where the model registry has no model loaded."""
     from app.main import create_app
     from app.ml.model_registry import get_model_registry
-    from app.services.geo_service import get_geo_service
+    from app.utils.geolocation import get_geo_coder
 
     app = create_app()
     app.dependency_overrides[get_model_registry] = lambda: empty_registry
-    app.dependency_overrides[get_geo_service] = lambda: geo_service
+    app.dependency_overrides[get_geo_coder] = lambda: geo_coder
 
     with TestClient(app, raise_server_exceptions=False) as c:
         yield c

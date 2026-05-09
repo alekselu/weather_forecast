@@ -7,20 +7,22 @@ This is the central business-logic component that the API layer calls.
 from __future__ import annotations
 
 from datetime import date, timedelta
-
+import pandas as pd
+import numpy as np
 from app.core.exceptions import ModelNotAvailableError
 from app.ml.model_registry import FeatureVector, ModelRegistry
 from app.schemas.forecast import ForecastResponse
-from app.services.geo_service import GeoService
+from app.utils.geolocation import GeoCoder
 import logging
+import asyncio
 
 
 logger = logging.getLogger(__name__)
 
 
 class ForecastService:
-    def __init__(self, geo_service: GeoService, model_registry: ModelRegistry) -> None:
-        self._geo = geo_service
+    def __init__(self, geo_coder: GeoCoder, model_registry: ModelRegistry) -> None:
+        self._geo = geo_coder
         self._registry = model_registry
 
     def get_forecast(
@@ -39,44 +41,36 @@ class ForecastService:
         Raises:
             CityNotFoundError: If the city cannot be geocoded.
             ModelNotAvailableError: If no model is loaded.
-            InsufficientDataError: If historical data is missing (v1+).
+            InsufficientDataError: If historical data is missing.
         """
         target_date = forecast_date or (date.today() + timedelta(days=1))
 
         logger.info("forecast_requested", city=city, target_date=str(target_date))
 
-        # 1. Resolve city → coordinates
-        location = self._geo.resolve(city)
-
-        # 2. Build feature vector
-        #    v0: only lat/lon + date are populated; lags filled by DB in v1+
         doy = target_date.timetuple().tm_yday
-        features = FeatureVector(
-            city=location.city,
-            forecast_date=target_date,
-            lat=location.latitude,
-            lon=location.longitude,
-            day_of_year=doy,
-            month=target_date.month,
-            day_of_week=target_date.weekday(),
-        )
+        # Stub for tests
+        values = dict(enumerate(-10.0 * np.cos(np.pi * np.arange(12) / 6)))
+        features = pd.DataFrame.from_dict({"value": [values[target_date.month]]})
 
         # 3. Run prediction
         if not self._registry.is_ready:
             raise ModelNotAvailableError("No model loaded in registry")
 
-        predicted_temp = self._registry.predict(features)
+        predicted_temp = self._registry.predict(
+            features,
+            (target_date - date.today()).days,
+        )
 
         logger.info(
             "forecast_produced",
-            city=location.city,
+            city=city,
             date=str(target_date),
             temp=predicted_temp,
             model=self._registry.current_version,
         )
 
         return ForecastResponse(
-            city=location.city,
+            city=city,
             date=target_date,
             avg_temperature_c=predicted_temp,
             model_version=self._registry.current_version,

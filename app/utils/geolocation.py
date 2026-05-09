@@ -2,6 +2,7 @@ from geopy.geocoders import Nominatim
 from geopy.adapters import AioHTTPAdapter
 from geopy.extra.rate_limiter import AsyncRateLimiter
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError
+from app.core.exceptions import CityNotFoundError
 
 
 class GeoCoder:
@@ -34,5 +35,13 @@ class GeoCoder:
         except GeocoderServiceError as e:
             raise RuntimeError(f"Nominatim service error: {e}")
         if loc is None:
-            raise ValueError(f"Could not geocode {city!r}")
+            raise CityNotFoundError(f"Could not geocode {city!r}")
         return loc.latitude, loc.longitude
+
+
+# Module-level singleton
+_geo_coder = GeoCoder()
+
+
+def get_geo_coder() -> GeoCoder:
+    return _geo_coder

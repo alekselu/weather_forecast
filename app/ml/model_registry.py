@@ -15,6 +15,7 @@ from datetime import date
 from typing import Optional
 import logging
 from app.core.exceptions import ModelNotAvailableError
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class FeatureVector:
 
 class BaseModel(ABC):
     @abstractmethod
-    def fit(self, df: pd.DataFrame):
+    def fit(self, df: pd.DataFrame) -> BaseModel:
         pass
 
     @abstractmethod
@@ -50,16 +51,16 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def update(self, new_data: pd.DataFrame):
+    def update(self, new_data: pd.DataFrame) -> BaseModel:
         pass
 
     @abstractmethod
-    def save(self, path: str):
+    def save(self, path: str) -> None:
         pass
 
     @classmethod
     @abstractmethod
-    def load(cls, path: str):
+    def load(cls, path: str) -> BaseModel:
         pass
 
 
@@ -86,28 +87,24 @@ class ModelStub(BaseModel):
     def is_ready(self) -> bool:
         return True  # stub is always ready
 
-    def predict(self, features: FeatureVector) -> float:
-        doy = features.day_of_year or features.forecast_date.timetuple().tm_yday
-        lat = features.lat
+    def fit(self, df):
+        return self
 
-        # Rough latitude-based seasonal parameters
-        # At equator: base=25, amplitude=5; at 60°N: base=6, amplitude=14
-        t = max(0.0, min(1.0, (lat - 0) / 90))  # 0..1 pole fraction
-        base = 25.0 - 19.0 * t
-        amplitude = 5.0 + 9.0 * t
+    def predict(self, history, horizon):
+        if history.empty:
+            return 0.0
+        recent_history = history["value"]
+        return float(recent_history.mean())
 
-        temp = base + amplitude * math.sin((doy - 80) * 2 * math.pi / 365)
-        result = round(temp, 1)
+    def update(self, new_data):
+        return self
 
-        logger.info(
-            "stub_prediction",
-            city=features.city,
-            date=str(features.forecast_date),
-            lat=lat,
-            doy=doy,
-            predicted=result,
-        )
-        return result
+    def save(self, path):
+        pass
+
+    @classmethod
+    def load(cls, path):
+        return cls()
 
 
 class ModelRegistry:
@@ -144,7 +141,7 @@ class ModelRegistry:
     def predict(self, history: pd.DataFrame, horizon: int) -> float:
         if not self.is_ready:
             raise ModelNotAvailableError("Registry has no loaded model")
-        return self._model.predict(features)
+        return self._model.predict(history, horizon)
 
 
 _registry = ModelRegistry()

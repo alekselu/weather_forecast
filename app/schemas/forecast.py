@@ -29,7 +29,7 @@ class ForecastRequest(BaseModel):
 
 class ForecastResponse(BaseModel):
     city: str
-    date_: date
+    date: date
     avg_temperature_c: float = Field(
         ...,
         description="Predicted average temperature in °C",

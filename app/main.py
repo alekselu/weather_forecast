@@ -7,7 +7,6 @@ from app.core.logging import setup_logging
 from app.utils.geolocation import GeoCoder
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
 from app.ml.model_registry import ModelRegistry, get_model_registry
-from app.services.geo_service import GeoService, get_geo_service
 from app.services.forecast_service import ForecastService
 
 
@@ -37,7 +36,7 @@ def get_forecast_service(
     geo: Annotated[GeoService, Depends(get_geo_service)],
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
 ) -> ForecastService:
-    return ForecastService(geo_service=geo, model_registry=registry)
+    return ForecastService(geo_coder=geo, model_registry=registry)
 
 
 # ── Endpoints ────────────────────────────────────────────────────────────────

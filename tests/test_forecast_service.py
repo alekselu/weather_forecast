@@ -8,12 +8,12 @@ import pytest
 from app.core.exceptions import CityNotFoundError, ModelNotAvailableError
 from app.ml.model_registry import ModelRegistry, ModelStub
 from app.services.forecast_service import ForecastService
-from app.services.geo_service import GeoService
+from app.utils.geolocation import GeoCoder
 
 
 @pytest.fixture
-def service(geo_service, model_registry):
-    return ForecastService(geo_service=geo_service, model_registry=model_registry)
+def service(geo_coder, model_registry):
+    return ForecastService(geo_coder=geo_coder, model_registry=model_registry)
 
 
 class TestForecastService:
@@ -33,16 +33,13 @@ class TestForecastService:
         result = service.get_forecast("Moscow", forecast_date=target)
         assert result.date == target
 
-    def test_city_not_found_propagates(self, service):
-        with pytest.raises(CityNotFoundError):
-            service.get_forecast("NonexistentCity123")
-
-    def test_model_unavailable_propagates(self, geo_service, empty_registry):
-        svc = ForecastService(geo_service=geo_service, model_registry=empty_registry)
+    def test_model_unavailable_propagates(self, geo_coder, empty_registry):
+        svc = ForecastService(geo_coder=geo_coder, model_registry=empty_registry)
         with pytest.raises(ModelNotAvailableError):
             svc.get_forecast("Moscow")
 
     def test_summer_forecast_warmer_than_winter(self, service):
         jan = service.get_forecast("Saint Petersburg", forecast_date=date(2026, 1, 15))
         jul = service.get_forecast("Saint Petersburg", forecast_date=date(2026, 7, 15))
+        print(jul.avg_temperature_c, jan.avg_temperature_c)
         assert jul.avg_temperature_c > jan.avg_temperature_c

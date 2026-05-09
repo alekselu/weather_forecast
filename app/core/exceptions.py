@@ -4,7 +4,7 @@ class WeatherForecastError(Exception):
     pass
 
 
-class CityNotFoundError(WeatherForecastError):
+class CityNotFoundError(WeatherForecastError, ValueError):
     """Raised when the city cannot be geocoded."""
 
     def __init__(self, city: str) -> None:
