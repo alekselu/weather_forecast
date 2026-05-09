@@ -113,6 +113,7 @@ async def get_forecast(
         "city": city,
         "country_code": country_code,
         "params": params,
+        "payload": {},
     }
     try:
         coords = await geocoder.fetch_location(city, country_code)

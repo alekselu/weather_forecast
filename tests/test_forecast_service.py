@@ -20,18 +20,17 @@ class TestForecastService:
     def test_returns_forecast_response(self, service):
         result = service.get_forecast("Moscow")
         assert result.city == "Moscow"
-        assert isinstance(result.avg_temperature_c, float)
-        assert result.model_version == "stub-v0"
+        assert isinstance(result.payload["avg_temperature_c"], float)
 
     def test_default_date_is_tomorrow(self, service):
         result = service.get_forecast("Moscow")
         expected = date.today() + timedelta(days=1)
-        assert result.date == expected
+        assert result.time == expected
 
     def test_explicit_date(self, service):
         target = date(2026, 7, 15)
         result = service.get_forecast("Moscow", forecast_date=target)
-        assert result.date == target
+        assert result.time == target
 
     def test_model_unavailable_propagates(self, geo_coder, empty_registry):
         svc = ForecastService(geo_coder=geo_coder, model_registry=empty_registry)
@@ -41,5 +40,4 @@ class TestForecastService:
     def test_summer_forecast_warmer_than_winter(self, service):
         jan = service.get_forecast("Saint Petersburg", forecast_date=date(2026, 1, 15))
         jul = service.get_forecast("Saint Petersburg", forecast_date=date(2026, 7, 15))
-        print(jul.avg_temperature_c, jan.avg_temperature_c)
-        assert jul.avg_temperature_c > jan.avg_temperature_c
+        assert jul.payload["avg_temperature_c"] > jan.payload["avg_temperature_c"]

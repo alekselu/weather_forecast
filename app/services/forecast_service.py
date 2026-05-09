@@ -46,7 +46,7 @@ class ForecastService:
         """
         target_date = forecast_date or (date.today() + timedelta(days=1))
 
-        logger.info("forecast_requested", city=city, target_date=str(target_date))
+        logger.info("forecast_requested: %s, %s", city, str(target_date))
 
         doy = target_date.timetuple().tm_yday
         # Stub for tests
@@ -64,16 +64,25 @@ class ForecastService:
         )
 
         logger.info(
-            "forecast_produced",
-            city=city,
-            date=str(target_date),
-            temp=predicted_temp,
-            model=self._registry.current_version,
+            "forecast_produced: %s",
+            ",".join(
+                f"{k}:{v}"
+                for k, v in dict(
+                    city=city,
+                    date=str(target_date),
+                    temp=predicted_temp,
+                    model=self._registry.current_version,
+                ).items()
+            ),
         )
 
         return ForecastResponse(
             city=city,
             time=target_date,
-            avg_temperature_c=predicted_temp,
-            model_version=self._registry.current_version,
+            params=[],
+            coords="",
+            payload=dict(
+                avg_temperature_c=predicted_temp,
+                model_version=self._registry.current_version,
+            ),
         )

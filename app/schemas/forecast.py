@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -30,9 +30,10 @@ class ForecastRequest(BaseModel):
 class ForecastResponse(BaseModel):
     time: date
     city: str
-    country_code: str
+    country_code: str = "ru"
     params: list[str]
     coords: str
+    payload: dict[str, Any]
 
 
 class HealthResponse(BaseModel):
