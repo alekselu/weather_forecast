@@ -128,7 +128,7 @@ class ModelRegistry:
         """Atomically replace the current model (hot-swap during retraining)."""
         old_version = self._model.version if self._model else "none"
         self._model = new_model
-        logger.info("model_swapped", old=old_version, new=new_model.version)
+        logger.info(f"model_swapped, old={old_version}, new={new_model.version}")
 
     @property
     def is_ready(self) -> bool:

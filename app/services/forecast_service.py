@@ -13,6 +13,7 @@ from app.core.exceptions import ModelNotAvailableError
 from app.ml.model_registry import FeatureVector, ModelRegistry
 from app.schemas.forecast import ForecastResponse
 from app.utils.geolocation import GeoCoder
+from app.utils.fakes import fake_temperature_by_date
 import logging
 import asyncio
 
@@ -49,8 +50,9 @@ class ForecastService:
 
         doy = target_date.timetuple().tm_yday
         # Stub for tests
-        values = dict(enumerate(-10.0 * np.cos(np.pi * np.arange(12) / 6)))
-        features = pd.DataFrame.from_dict({"value": [values[target_date.month]]})
+        features = pd.DataFrame.from_dict(
+            {"value": [fake_temperature_by_date(target_date)]}
+        )
 
         # 3. Run prediction
         if not self._registry.is_ready:
