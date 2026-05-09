@@ -2,7 +2,7 @@ import logging
 from sqlalchemy import inspect
 from app.db.session import ConnectionParams, get_db_connections
 from app.utils.structures import TimePeriod
-from app.utils.uitls import LoggerAdapter
+from app.utils.utils import LoggerAdapter
 
 default_logger = logging.getLogger(__name__)
 

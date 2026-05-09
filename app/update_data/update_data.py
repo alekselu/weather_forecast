@@ -10,7 +10,7 @@ from app.router.router import AsyncRouter
 from app.db.utils import ApiDbProxy
 from app.core.logging import setup_logging
 from app.utils.structures import TimePeriod
-from app.utils.uitls import LoggerAdapter
+from app.utils.utils import LoggerAdapter
 
 setup_logging()
 
