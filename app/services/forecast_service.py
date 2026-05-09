@@ -71,7 +71,7 @@ class ForecastService:
 
         return ForecastResponse(
             city=city,
-            date=target_date,
+            time=target_date,
             avg_temperature_c=predicted_temp,
             model_version=self._registry.current_version,
         )

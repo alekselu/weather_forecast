@@ -28,33 +28,11 @@ class ForecastRequest(BaseModel):
 
 
 class ForecastResponse(BaseModel):
+    time: date
     city: str
-    date: date
-    avg_temperature_c: float = Field(
-        ...,
-        description="Predicted average temperature in °C",
-        examples=[8.3],
-    )
-    model_version: str = Field(
-        default="stub-v0",
-        description="Identifier of the model that produced this forecast",
-    )
-    confidence: Optional[str] = Field(
-        default=None,
-        description="Optional qualitative confidence: low | medium | high",
-    )
-
-    model_config = {
-        "json_schema_extra": {
-            "example": {
-                "city": "Saint Petersburg",
-                "date": "2026-04-27",
-                "avg_temperature_c": 8.3,
-                "model_version": "stub-v0",
-                "confidence": None,
-            }
-        }
-    }
+    country_code: str
+    params: list[str]
+    coords: str
 
 
 class HealthResponse(BaseModel):

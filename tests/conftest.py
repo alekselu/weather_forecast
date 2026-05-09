@@ -12,6 +12,8 @@ from __future__ import annotations
 from datetime import date
 import pytest
 from fastapi.testclient import TestClient
+from app.main import app, get_geo_coder
+from app.ml.model_registry import get_model_registry
 
 from app.ml.model_registry import ModelRegistry, ModelStub
 from app.utils.geolocation import GeoCoder
@@ -54,36 +56,21 @@ def forecast_service(
 
 
 @pytest.fixture
-def client(model_registry: ModelRegistry, geo_coder: GeoCoder) -> TestClient:
-    """
-    Return a TestClient with dependency overrides.
-    This avoids any startup side-effects (DB, real geocoder, etc.)
-    """
-    from app.main import create_app
-    from app.ml.model_registry import get_model_registry
-    from app.utils.geolocation import get_geo_coder
-
-    app = create_app()
+def client(model_registry, geo_coder):
     app.dependency_overrides[get_model_registry] = lambda: model_registry
     app.dependency_overrides[get_geo_coder] = lambda: geo_coder
-
-    with TestClient(app, raise_server_exceptions=False) as c:
+    with TestClient(app) as c:
         yield c
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def client_no_model(empty_registry: ModelRegistry, geo_coder: GeoCoder) -> TestClient:
-    """TestClient where the model registry has no model loaded."""
-    from app.main import create_app
-    from app.ml.model_registry import get_model_registry
-    from app.utils.geolocation import get_geo_coder
-
-    app = create_app()
+def client_no_model(empty_registry, geo_coder):
     app.dependency_overrides[get_model_registry] = lambda: empty_registry
     app.dependency_overrides[get_geo_coder] = lambda: geo_coder
-
-    with TestClient(app, raise_server_exceptions=False) as c:
+    with TestClient(app) as c:
         yield c
+    app.dependency_overrides.clear()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

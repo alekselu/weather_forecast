@@ -122,7 +122,7 @@ class ModelRegistry:
     def load(self, model: BaseModel) -> None:
         """Load initial model (call on startup)."""
         self._model = model
-        logger.info("model_loaded", version=model.version)
+        logger.info(f"model_loaded, version = {model.version}")
 
     def swap(self, new_model: BaseModel) -> None:
         """Atomically replace the current model (hot-swap during retraining)."""

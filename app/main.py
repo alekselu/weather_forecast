@@ -4,7 +4,7 @@ from typing import Any, Annotated, Dict
 from app import db
 from datetime import date
 from app.core.logging import setup_logging
-from app.utils.geolocation import GeoCoder
+from app.utils.geolocation import GeoCoder, get_geo_coder
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
 from app.ml.model_registry import ModelRegistry, get_model_registry
 from app.services.forecast_service import ForecastService
@@ -33,7 +33,7 @@ geocoder = GeoCoder()
 
 
 def get_forecast_service(
-    geo: Annotated[GeoService, Depends(get_geo_service)],
+    geo: Annotated[GeoCoder, Depends(get_geo_coder)],
     registry: Annotated[ModelRegistry, Depends(get_model_registry)],
 ) -> ForecastService:
     return ForecastService(geo_coder=geo, model_registry=registry)
@@ -74,6 +74,7 @@ def check_db() -> dict[str, Any]:
 async def get_forecast(
     time: Annotated[date, Query()],
     city: Annotated[str, Query()],
+    geocoder: Annotated[GeoCoder, Depends(get_geo_coder)],
     country_code: str = "ru",
     params: list[str] = Query(),
 ) -> dict[str, Any]:
@@ -107,13 +108,15 @@ async def get_forecast(
         - 'params': The list of requested weather parameters
     """
     result: Dict[str, Any] = {}
-    result["time"] = time
-    result["city"] = city
+    result: Dict[str, Any] = {
+        "time": time,
+        "city": city,
+        "country_code": country_code,
+        "params": params,
+    }
     try:
         coords = await geocoder.fetch_location(city, country_code)
         result["coords"] = str(coords)
     except Exception as e:
         result["coords"] = str(e)
-    result["country_code"] = country_code
-    result["params"] = params
-    return result
+    return ForecastResponse(**result)
