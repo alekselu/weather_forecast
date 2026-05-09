@@ -4,7 +4,7 @@ from typing import Any, Annotated, Dict
 from app import db
 from datetime import date
 from app.core.logging import setup_logging
-from app.utils.geolocation import GeoCoder
+from app.utils.geolocation import GeoCoder, City, Coordinates
 
 setup_logging()
 import logging
@@ -49,7 +49,9 @@ async def get_forecast(
     result["time"] = time
     result["city"] = city
     try:
-        coords = await geocoder.fetch_location(city, country_code)
+        coords: Coordinates = await geocoder.fetch_location_from(
+            City(city, country_code)
+        )
         result["coords"] = str(coords)
     except Exception as e:
         result["coords"] = str(e)

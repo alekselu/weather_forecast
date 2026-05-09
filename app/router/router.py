@@ -8,9 +8,9 @@ from app.router.messages.messages import (
     DataParams,
     ResponseParams,
     ResponseSpecificParams,
-    TimePeriod,
     data_params_by_period,
 )
+from app.utils.structures import TimePeriod
 
 
 def dict_of_lists_to_list_of_dicts(
@@ -49,7 +49,7 @@ class AsyncRouter:
         params |= request.provided_params()
 
         requested_params = request.requested_params()
-        formatted_params = {k: ",".join(v) for k, v in requested_params.items()}
+        formatted_params = {str(k): ",".join(v) for k, v in requested_params.items()}
         params |= formatted_params
         return params
 

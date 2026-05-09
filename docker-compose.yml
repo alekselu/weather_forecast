@@ -17,6 +17,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  migrations:
+    build: .
+    container_name: weather_migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    command: alembic upgrade head
+    restart: "no"
 
   app:
     build:
