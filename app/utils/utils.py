@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 
 def _get_db_url() -> str:
     BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-    print(BASE_DIR)
     load_dotenv(os.path.join(BASE_DIR, ".env"))
 
     OPRIONAL_DATABASE_URL = os.getenv("DATABASE_URL")
