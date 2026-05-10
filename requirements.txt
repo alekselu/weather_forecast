@@ -10,6 +10,7 @@ aiohttp
 alembic
 once-py
 python-dotenv
+SQLAlchemy
 
 black
 isort
