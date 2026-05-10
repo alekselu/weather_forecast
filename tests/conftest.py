@@ -1,6 +1,8 @@
 import pytest
 import pandas as pd
 import numpy as np
+import sys
+from pathlib import Path
 
 
 @pytest.fixture
@@ -17,3 +19,6 @@ def common_train_df():
 @pytest.fixture
 def common_future_df():
     return pd.DataFrame({"date": pd.date_range("2021-02-05", periods=7)})
+
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 import os
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 alembic_cfg = Config("alembic.ini")

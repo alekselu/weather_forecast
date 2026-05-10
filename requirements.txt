@@ -2,11 +2,19 @@ fastapi[standard]
 psycopg[binary]
 geopy
 python-dotenv
+httpx
+geopy
+pytest
+pytest-asyncio
+aiohttp
+alembic
+once-py
+python-dotenv
+SQLAlchemy
+
 black
 isort
-alembic
-load_dotenv
-once
+
 
 # for ipynb
 # pandas
