@@ -1,5 +1,5 @@
 import joblib
-
+import pandas as pd
 from statsmodels.tsa.statespace.sarimax import (
     SARIMAX,
 )
@@ -7,32 +7,23 @@ from statsmodels.tsa.statespace.sarimax import (
 from app.ml.preprocessing.sarimax_preprocessor import (
     SARIMAXPreprocessor,
 )
+from app.ml.core.forecast_model import ForecastModel
 
 
-class SARIMAXForecaster:
+class SARIMAXForecaster(ForecastModel):
     def __init__(
         self,
-        target_column,
         order=(1, 1, 1),
-        seasonal_order=(1, 1, 1, 365),
+        seasonal_order=(1, 1, 1),
     ):
-
-        self.target_column = target_column
-
         self.order = order
         self.seasonal_order = seasonal_order
-
         self.preprocessor = SARIMAXPreprocessor()
-
         self.model = None
         self.results = None
 
-    def fit(self, df):
-
-        df = self.preprocessor.transform(df)
-
-        y = df[self.target_column]
-
+    def fit(self, X, y):
+        df = self.preprocessor.transform(X, y)
         X = df[
             [
                 "day_sin",
@@ -43,7 +34,6 @@ class SARIMAXForecaster:
                 "month_cos",
             ]
         ]
-
         self.model = SARIMAX(
             endog=y,
             exog=X,
@@ -52,17 +42,12 @@ class SARIMAXForecaster:
             enforce_stationarity=False,
             enforce_invertibility=False,
         )
-
         self.results = self.model.fit(disp=False)
+        return self
 
-    def predict(
-        self,
-        future_covariates,
-    ):
-
-        future_covariates = self.preprocessor.transform(future_covariates)
-
-        X_future = future_covariates[
+    def predict(self, X_future, X_history=None, y_history=None):
+        X_future = self.preprocessor.transform(X_future)
+        X_future = X_future[
             [
                 "day_sin",
                 "day_cos",
@@ -72,23 +57,25 @@ class SARIMAXForecaster:
                 "month_cos",
             ]
         ]
-
         forecast = self.results.forecast(
             steps=len(X_future),
             exog=X_future,
         )
-
-        return forecast.tolist()
+        return pd.Series(forecast.tolist())
 
     def save(self, path):
-
+        joblib.dump(
+            {
+                "results": self.results,
+                "order": self.order,
+                "seasonal_order": self.seasonal_order,
+            }
+        )
         self.results.save(path)
 
     @classmethod
     def load(cls, path):
-
-        obj = cls(target_column="unknown")
-
-        obj.results = joblib.load(path)
-
+        data = joblib.load(path)
+        obj = cls(order=data["order"], seasonal_order=data["seasonal_order"])
+        obj.results = data["results"]
         return obj

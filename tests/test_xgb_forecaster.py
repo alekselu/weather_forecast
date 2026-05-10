@@ -13,7 +13,7 @@ def test_xgb_fit_predict(training_data, future_data):
 
     # Предсказание
     preds = model.predict(
-        history=training_data,
+        X_history=training_data,
         future_covariates=future_data,
     )
 

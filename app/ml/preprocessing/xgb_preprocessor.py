@@ -3,35 +3,45 @@ import pandas as pd
 from app.ml.preprocessing.calendar_features import (
     CalendarFeatureBuilder,
 )
+from app.ml.preprocessing.dataset_preprocessor import DatasetPreprocessor
 
 
-class XGBPreprocessor:
+class XGBPreprocessor(DatasetPreprocessor):
+    DEFAULT_LAGS = [1, 2, 3, 7, 14, 30]
+    DEFAULT_WINDOWS = [3, 7, 14]
 
-    LAGS = [1, 2, 3, 7, 14, 30]
-    WINDOWS = [3, 7, 14]
+    def __init__(
+        self,
+        lags=None,
+        rolling_windows=None,
+    ):
+        self.lags = lags or self.DEFAULT_LAGS
+        self.rolling_windows = rolling_windows or self.DEFAULT_WINDOWS
 
-    def __init__(self, target_column):
-        self.target_column = target_column
+        self.calendar_builder = CalendarFeatureBuilder()
 
-    def transform(self, df):
+    def transform(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+    ):
+        X = X.copy()
+        X = self.calendar_builder.transform(X)
+        for lag in self.lags:
+            X[f"lag_{lag}"] = y.shift(lag)
 
-        df = df.copy()
+        for window in self.rolling_windows:
+            X[f"roll_mean_{window}"] = y.shift(1).rolling(window).mean()
 
-        df = CalendarFeatureBuilder.add_features(df)
+            X[f"roll_std_{window}"] = y.shift(1).rolling(window).std()
 
-        for lag in self.LAGS:
-            df[f"lag_{lag}"] = df[self.target_column].shift(lag)
-
-        for window in self.WINDOWS:
-
-            df[f"roll_mean_{window}"] = (
-                df[self.target_column].shift(1).rolling(window).mean()
-            )
-
-            df[f"roll_std_{window}"] = (
-                df[self.target_column].shift(1).rolling(window).std()
-            )
-
-        df["diff_1"] = df[self.target_column].diff()
-
-        return df.dropna()
+        # X["diff_1"] = (
+        #     y.diff(1)
+        # )
+        X = X.dropna()
+        X = X.drop(
+            columns=[
+                "date",
+            ]
+        )
+        return X, y

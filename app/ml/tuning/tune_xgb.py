@@ -63,7 +63,7 @@ class XGBTuner:
             model.fit(train_df)
 
             preds = model.predict(
-                history=train_df,
+                X_history=train_df,
                 horizon=len(test_df),
             )
 

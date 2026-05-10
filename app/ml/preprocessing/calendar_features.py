@@ -1,29 +1,38 @@
-import numpy as np
+import pandas as pd
+
+from app.ml.preprocessing.cyclic_features import (
+    CyclicFeatureEncoder,
+)
 
 
 class CalendarFeatureBuilder:
-    @staticmethod
-    def add_features(df):
+    def transform(
+        self,
+        df: pd.DataFrame,
+    ) -> pd.DataFrame:
 
         df = df.copy()
 
-        df["day_of_year"] = df["date"].dt.dayofyear
-        df["weekday"] = df["date"].dt.weekday
         df["month"] = df["date"].dt.month
+        df["weekday"] = df["date"].dt.weekday
+        df["day_of_year"] = df["date"].dt.dayofyear
 
-        # day of year
-        df["day_sin"] = np.sin(2 * np.pi * df["day_of_year"] / 365)
+        df = CyclicFeatureEncoder.encode(
+            df,
+            "month",
+            12,
+        )
 
-        df["day_cos"] = np.cos(2 * np.pi * df["day_of_year"] / 365)
+        df = CyclicFeatureEncoder.encode(
+            df,
+            "weekday",
+            7,
+        )
 
-        # weekday
-        df["weekday_sin"] = np.sin(2 * np.pi * df["weekday"] / 7)
-
-        df["weekday_cos"] = np.cos(2 * np.pi * df["weekday"] / 7)
-
-        # month
-        df["month_sin"] = np.sin(2 * np.pi * df["month"] / 12)
-
-        df["month_cos"] = np.cos(2 * np.pi * df["month"] / 12)
+        df = CyclicFeatureEncoder.encode(
+            df,
+            "day_of_year",
+            365,
+        )
 
         return df

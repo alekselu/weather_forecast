@@ -1,90 +1,67 @@
 import joblib
 import pandas as pd
+import numpy as np
 
 from xgboost import XGBRegressor
 
 from app.ml.preprocessing.xgb_preprocessor import (
     XGBPreprocessor,
 )
+from app.ml.core.forecast_model import ForecastModel
 
 
-class XGBForecaster:
+class XGBForecaster(ForecastModel):
     def __init__(
         self,
-        target_column,
         params=None,
+        model=None,
     ):
-        self.target_column = target_column
-
-        self.preprocessor = XGBPreprocessor(target_column)
-
+        self.preprocessor = XGBPreprocessor()
         self.params = params or {}
+        self.model = XGBRegressor(**self.params) if model is None else model
 
-        self.model = XGBRegressor(**self.params)
-
-    def fit(self, df):
-
-        df = self.preprocessor.transform(df)
-
+    def fit(self, X, y):
+        df = self.preprocessor.transform(X, y)
         X = df.drop(
             columns=[
                 "date",
                 self.target_column,
             ]
         )
-
-        y = df[self.target_column]
-
         self.model.fit(X, y)
+        return self
 
-    def predict(
-        self,
-        history,
-        future_covariates,
-    ):
-
-        history = history.copy()
-
-        predictions = []
-
-        for i in range(len(future_covariates)):
-
+    def predict(self, X_future, X_history=None, y_history=None):
+        X_history = X_history.copy()
+        predictions = pd.Series([])
+        for i in range(len(X_future)):
             combined = pd.concat(
                 [
-                    history,
-                    future_covariates.iloc[: i + 1],
+                    X_history,
+                    X_future.iloc[: i + 1],
                 ]
             )
-
-            processed = self.preprocessor.transform(combined)
+            processed = self.preprocessor.transform(
+                combined, pd.concat([y_history, np.nan])
+            )
 
             latest = processed.iloc[-1:]
-
             X = latest.drop(
                 columns=[
                     "date",
-                    self.target_column,
                 ]
             )
-
             pred = self.model.predict(X)[0]
-
-            predictions.append(pred)
-
-            next_row = future_covariates.iloc[i : i + 1].copy()
-
-            next_row[self.target_column] = pred
-
-            history = pd.concat([history, next_row])
-
+            predictions = pd.concat([predictions, pred])
+            next_row = X_future.iloc[i : i + 1].copy()
+            # next_row[self.target_column] = pred
+            X_history = pd.concat([X_history, next_row])
         return predictions
 
     def save(self, path):
-
         joblib.dump(
             {
                 "model": self.model,
-                "target_column": self.target_column,
                 "params": self.params,
             },
             path,
@@ -92,14 +69,9 @@ class XGBForecaster:
 
     @classmethod
     def load(cls, path):
-
         data = joblib.load(path)
-
         obj = cls(
-            target_column=data["target_column"],
             params=data["params"],
         )
-
         obj.model = data["model"]
-
         return obj

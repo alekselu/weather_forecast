@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 @pytest.fixture
-def common_train_df():
+def training_data():
     dates = pd.date_range("2020-01-01", periods=400)
     return pd.DataFrame(
         {
@@ -17,7 +17,7 @@ def common_train_df():
 
 
 @pytest.fixture
-def common_future_df():
+def future_data():
     return pd.DataFrame({"date": pd.date_range("2021-02-05", periods=7)})
 
 

@@ -15,19 +15,22 @@ class ForecastModel(ABC):
     def predict(
         self,
         X_future: pd.DataFrame,
-        horizon: int,
+        X_history: pd.Series | None = None,
+        y_history: pd.Series | None = None,
+    ) -> pd.Series:
+        pass
+
+    @abstractmethod
+    def save(
+        self,
+        path: str,
     ):
-        pass
-
-    @abstractmethod
-    def update(self, new_data: pd.DataFrame):
-        pass
-
-    @abstractmethod
-    def save(self, path: str):
         pass
 
     @classmethod
     @abstractmethod
-    def load(cls, path: str):
+    def load(
+        cls,
+        path: str,
+    ):
         pass
