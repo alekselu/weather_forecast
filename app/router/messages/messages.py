@@ -4,6 +4,8 @@ from typing import ClassVar, Any, Dict
 from abc import ABC, abstractmethod
 from enum import StrEnum
 
+from app.utils.structures import TimePeriod
+
 
 @dataclass
 class ISimpleParams(ABC):
@@ -46,11 +48,6 @@ class TimeRequestParams(TimeFormat, ISimpleParams):
                 asdict(self).items(),
             )
         )
-
-
-class TimePeriod(StrEnum):
-    DAILY = "daily"
-    HOURLY = "hourly"
 
 
 @dataclass
@@ -115,7 +112,7 @@ class Request:
         result |= self.time_params.as_params()
         return result
 
-    def requested_params(self) -> Dict[str, tuple[str, ...]]:
+    def requested_params(self) -> Dict[TimePeriod, tuple[str, ...]]:
         """
         Returns:
           {
@@ -123,7 +120,7 @@ class Request:
             "hourly": ("temperature_2m",)
           }
         """
-        result: Dict[str, tuple[str, ...]] = {}
+        result: Dict[TimePeriod, tuple[str, ...]] = {}
         for period in self.time_periods:
             data_cls: type[DataParams] = _data_params_class(period)
             variable_names = data_cls.field_names()
