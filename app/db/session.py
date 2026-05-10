@@ -2,8 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import sessionmaker
-from typing import Any
-from app.utils.utils import LoggerAdapter
+from app.core.logging import LoggerAdapter
 from app.utils.utils import DATABASE_URL
 
 default_logger = logging.getLogger(__name__)
