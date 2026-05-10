@@ -9,12 +9,12 @@ Replace ModelStub with a real ModelAdapter when the model artifact exists.
 from __future__ import annotations
 
 import math
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 import logging
 from app.core.exceptions import ModelNotAvailableError
+from app.ml.core.base_model import BaseModel, ModelStub
 import pandas as pd
 
 logger = logging.getLogger(__name__)
@@ -39,72 +39,6 @@ class FeatureVector:
     day_of_year: Optional[int] = None
     month: Optional[int] = None
     day_of_week: Optional[int] = None
-
-
-class BaseModel(ABC):
-    @abstractmethod
-    def fit(self, df: pd.DataFrame) -> BaseModel:
-        pass
-
-    @abstractmethod
-    def predict(self, history: pd.DataFrame, horizon: int):
-        pass
-
-    @abstractmethod
-    def update(self, new_data: pd.DataFrame) -> BaseModel:
-        pass
-
-    @abstractmethod
-    def save(self, path: str) -> None:
-        pass
-
-    @classmethod
-    @abstractmethod
-    def load(cls, path: str) -> BaseModel:
-        pass
-
-
-class ModelStub(BaseModel):
-    """
-    Stub model — returns a naive seasonal estimate based on latitude and
-    day-of-year sinusoidal approximation.
-
-    Saint Petersburg (lat≈60°N):
-        Jan mean ≈ -5°C, Jul mean ≈ +18°C  → amplitude ≈ 11.5, centre ≈ 6.5
-    Generic formula: T = base + amplitude * sin((doy - 80) * 2π / 365)
-    where base and amplitude are derived from latitude.
-
-    This is intentionally simple and clearly labelled as a stub.
-    """
-
-    VERSION = "stub-v0"
-
-    @property
-    def version(self) -> str:
-        return self.VERSION
-
-    @property
-    def is_ready(self) -> bool:
-        return True  # stub is always ready
-
-    def fit(self, df):
-        return self
-
-    def predict(self, history, horizon):
-        if history.empty:
-            return 0.0
-        recent_history = history["value"]
-        return float(recent_history.mean())
-
-    def update(self, new_data):
-        return self
-
-    def save(self, path):
-        pass
-
-    @classmethod
-    def load(cls, path):
-        return cls()
 
 
 class ModelRegistry:
