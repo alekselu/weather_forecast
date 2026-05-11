@@ -9,7 +9,7 @@ class WeatherDaily(Base):
     id = Column(Integer, primary_key=True)
 
     # ключи
-    city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
+    city_id = Column(Integer, ForeignKey("city.id"), nullable=False)
     city = relationship("City")
 
     date = Column(Date, nullable=False, index=True)
