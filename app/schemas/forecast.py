@@ -3,7 +3,6 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, Field, field_validator
 
-
 # ── Request schemas ──────────────────────────────────────────────────────────
 
 

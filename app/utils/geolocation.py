@@ -10,18 +10,7 @@ from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceErro
 from app.core.exceptions import CityNotFoundError
 from geopy.geocoders import Nominatim
 from geopy.location import Location
-
-
-@dataclass
-class Coordinates:
-    latitude: float
-    longitude: float
-
-
-@dataclass
-class City:
-    name: str
-    country_code: str = "ru"
+from app.utils.structures import City, Coordinates
 
 
 class Direction(Enum):

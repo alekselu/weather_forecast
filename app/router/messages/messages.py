@@ -4,7 +4,7 @@ from typing import ClassVar, Any, Dict
 from abc import ABC, abstractmethod
 from enum import StrEnum
 
-from app.utils.structures import TimePeriod
+from app.utils.structures import TimePeriod, Coordinates
 
 
 @dataclass
@@ -16,11 +16,16 @@ class ISimpleParams(ABC):
 
 @dataclass
 class RequiredRequestParams(ISimpleParams):
-    latitude: float
-    longitude: float
+    coords: Coordinates
+
+    def __init__(self, latitude: float, longitude: float) -> None:
+        self.coords = Coordinates(latitude, longitude)
 
     def as_params(self) -> Dict[str, str]:
-        return asdict(self)
+        return asdict(self.coords)
+
+    def coordinates(self) -> Coordinates:
+        return self.coords
 
 
 @dataclass
@@ -100,7 +105,7 @@ def data_params_by_period(time_period: TimePeriod, **kwargs) -> DataParams:
 
 @dataclass
 class Request:
-    geo_params: RequiredRequestParams
+    required_params: RequiredRequestParams
     time_params: TimeRequestParams
     time_periods: list[TimePeriod]
     type: str = "GET"
@@ -108,7 +113,7 @@ class Request:
 
     def provided_params(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
-        result |= self.geo_params.as_params()
+        result |= self.required_params.as_params()
         result |= self.time_params.as_params()
         return result
 
@@ -126,6 +131,9 @@ class Request:
             variable_names = data_cls.field_names()
             result[period] = variable_names
         return result
+
+    def coordinates(self) -> Coordinates:
+        return self.required_params.coordinates()
 
 
 @dataclass
@@ -150,3 +158,9 @@ class ResponseParams(TimeFormat):
 @dataclass
 class ResponseData:
     data: list[ResponseParams]
+
+
+@dataclass
+class PlacedResponseData:
+    coords: Coordinates
+    data: ResponseData

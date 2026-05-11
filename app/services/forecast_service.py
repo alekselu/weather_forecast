@@ -17,7 +17,6 @@ from app.utils.fakes import fake_temperature_by_date
 import logging
 import asyncio
 
-
 logger = logging.getLogger(__name__)
 
 

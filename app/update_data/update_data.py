@@ -4,6 +4,7 @@ from app.router.messages.messages import (
     Request,
     TimeRequestParams,
     RequiredRequestParams,
+    PlacedResponseData,
     ResponseData,
 )
 from app.router.router import AsyncRouter
@@ -49,7 +50,7 @@ async def _process_request(
     request = Request(necessary_params, time_params, [TimePeriod.DAILY])
 
     _verify_requets(request, db_proxy)
-    response: ResponseData = await router.send_request(request)
+    response: PlacedResponseData = await router.send_request(request)
     logger.info(response.data)
 
 
