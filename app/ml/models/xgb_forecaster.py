@@ -43,7 +43,7 @@ class XGBForecaster(ForecastModel):
                 ignore_index=True,
             )
             processed = self.preprocessor.transform(
-                combined, pd.concat([y_history, pd.Series([np.nan])], ignore_index=True)
+                combined, pd.concat([y_history, y_history[-1:]], ignore_index=True)
             )
 
             latest = processed.iloc[-1:]

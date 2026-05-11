@@ -12,12 +12,13 @@ class XGBPreprocessor(DatasetPreprocessor):
 
     def __init__(
         self,
+        city_column: str = "city_id",
         lags=None,
         rolling_windows=None,
     ):
+        self.city_column = city_column
         self.lags = lags or self.DEFAULT_LAGS
         self.rolling_windows = rolling_windows or self.DEFAULT_WINDOWS
-
         self.calendar_builder = CalendarFeatureBuilder()
 
     def transform(
@@ -27,18 +28,27 @@ class XGBPreprocessor(DatasetPreprocessor):
     ):
         df = self.calendar_builder.transform(X.copy())
         print("Before target", len(X), len(y))
-        df["target"] = y.values
+        df["target"] = pd.to_numeric(y.values, errors="coerce")
+        print(f"{df['target'].dtype = }")
+        grouped = df.groupby(self.city_column)
         for lag in self.lags:
-            df[f"lag_{lag}"] = df.groupby("city_id")["target"].shift(lag)
+            df[f"lag_{lag}"] = grouped["target"].shift(lag)
         for window in self.rolling_windows:
-            group = df.groupby("city_id")["target"]
-            df[f"roll_mean_{window}"] = group.shift(1).transform(
-                lambda x: x.rolling(window).mean()
+            df[f"roll_mean_{window}"] = (
+                grouped["target"]
+                .shift(1)
+                .rolling(window)
+                .mean()
+                .reset_index(level=0, drop=True)
             )
-            df[f"roll_std_{window}"] = group.shift(1).transform(
-                lambda x: x.rolling(window).std()
+            df[f"roll_std_{window}"] = (
+                grouped["target"]
+                .shift(1)
+                .rolling(window)
+                .std()
+                .reset_index(level=0, drop=True)
             )
         # Encoding city_id as LabelEncoding or category type
         # df['city_id'] = df['city_id'].astype('category')
-        df["diff_1"] = y.shift(1).diff(1)
+        df["diff_1"] = grouped["target"].shift(1).diff(1)
         return df.dropna().drop(columns=["target", "date"], errors="ignore")
