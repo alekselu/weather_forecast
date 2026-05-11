@@ -1,0 +1,217 @@
+{
+  "info": {
+    "name": "Weather Forecast API",
+    "description": "Manual tests for the Weather Forecast FastAPI service.\nImport into Postman, set the `base_url` variable, and run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/health",
+        "description": "Verify the service is running and the model is loaded."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('status is ok', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.status).to.eql('ok');",
+              "  pm.expect(j.model_loaded).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forecast — Saint Petersburg (default date)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/forecast?city=Saint Petersburg",
+          "host": ["{{base_url}}"],
+          "path": ["forecast"],
+          "query": [{"key": "city", "value": "Saint Petersburg"}]
+        },
+        "description": "Forecast for tomorrow. Expects 200 with avg_temperature_c."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has temperature', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j).to.have.property('avg_temperature_c');",
+              "  pm.expect(j.avg_temperature_c).to.be.a('number');",
+              "  pm.expect(j.city).to.eql('Saint Petersburg');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forecast — Moscow explicit date",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/forecast?city=Moscow&date=2026-07-15",
+          "host": ["{{base_url}}"],
+          "path": ["forecast"],
+          "query": [
+            {"key": "city", "value": "Moscow"},
+            {"key": "date", "value": "2026-07-15"}
+          ]
+        },
+        "description": "Forecast for a specific summer date."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Date matches', () => {",
+              "  const j = pm.response.json();",
+              "  pm.expect(j.date).to.eql('2026-07-15');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forecast — v1 prefix",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/v1/forecast?city=Kazan",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "forecast"],
+          "query": [{"key": "city", "value": "Kazan"}]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error — Unknown city (404)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/forecast?city=NonexistentCityXYZ",
+          "host": ["{{base_url}}"],
+          "path": ["forecast"],
+          "query": [{"key": "city", "value": "NonexistentCityXYZ"}]
+        },
+        "description": "Should return 404 with code=CITY_NOT_FOUND."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 404', () => pm.response.to.have.status(404));",
+              "pm.test('Error code', () => {",
+              "  const detail = pm.response.json().detail;",
+              "  pm.expect(detail.code).to.eql('CITY_NOT_FOUND');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error — Missing city param (422)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/forecast",
+          "host": ["{{base_url}}"],
+          "path": ["forecast"]
+        },
+        "description": "Should return 422 Unprocessable Entity."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 422', () => pm.response.to.have.status(422));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Error — Invalid date format (422)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/forecast?city=Moscow&date=not-a-date",
+          "host": ["{{base_url}}"],
+          "path": ["forecast"],
+          "query": [
+            {"key": "city", "value": "Moscow"},
+            {"key": "date", "value": "not-a-date"}
+          ]
+        },
+        "description": "Invalid date format should return 422."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 422', () => pm.response.to.have.status(422));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "OpenAPI Schema",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/openapi.json",
+        "description": "Verify OpenAPI schema is reachable."
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', () => pm.response.to.have.status(200));",
+              "pm.test('Has paths', () => {",
+              "  pm.expect(pm.response.json()).to.have.property('paths');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
