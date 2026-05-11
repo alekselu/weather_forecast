@@ -38,7 +38,7 @@ class XGBForecaster(ForecastModel):
             combined = pd.concat(
                 [
                     X_history,
-                    X_future.iloc[: i + 1],
+                    X_future.iloc[i : i + 1],
                 ],
                 ignore_index=True,
             )
@@ -53,10 +53,12 @@ class XGBForecaster(ForecastModel):
                 ],
                 errors="ignore",
             )
-            pred = self.model.predict(X)[0]
-            predictions = pd.concat([predictions, pd.Series([pred])], ignore_index=True)
+            pred = pd.Series([self.model.predict(X)[0]])
+            predictions = pd.concat([predictions, pred], ignore_index=True)
             next_row = X_future.iloc[i : i + 1].copy()
             X_history = pd.concat([X_history, next_row], ignore_index=True)
+            y_history = pd.concat([y_history, pred], ignore_index=True)
+            print("After pred: ", len(X_history), len(y_history))
         return predictions
 
     def save(self, path):

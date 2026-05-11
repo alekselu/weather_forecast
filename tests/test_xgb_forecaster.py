@@ -4,14 +4,14 @@ import pytest
 from app.ml.models.xgb_forecaster import XGBForecaster
 
 
-def test_xgb_fit_predict(training_data, future_data):
+def test_xgb_fit_predict(tr, ts):
     limit = 7
-    X, y = training_data.drop(columns=["temperature"]), training_data["temperature"]
+    X, y = tr.drop(columns=["temperature"]), tr["temperature"]
     model = XGBForecaster()
     model.fit(X, y)
     print("After fit ", X.columns)
     preds = model.predict(
-        X_future=future_data[:limit],
+        X_future=ts[:limit],
         X_history=X,
         y_history=y,
     )

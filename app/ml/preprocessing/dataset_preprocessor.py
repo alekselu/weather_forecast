@@ -7,6 +7,6 @@ class DatasetPreprocessor(ABC):
     def transform(
         self,
         X: pd.DataFrame,
-        y: pd.Series = None,
+        y: pd.Series,
     ) -> pd.DataFrame:
         pass

@@ -25,23 +25,20 @@ class XGBPreprocessor(DatasetPreprocessor):
         X: pd.DataFrame,
         y: pd.Series,
     ):
-        X = X.copy()
-        X = self.calendar_builder.transform(X)
+        df = self.calendar_builder.transform(X.copy())
+        print("Before target", len(X), len(y))
+        df["target"] = y.values
         for lag in self.lags:
-            X[f"lag_{lag}"] = y.shift(lag)
-
+            df[f"lag_{lag}"] = df.groupby("city_id")["target"].shift(lag)
         for window in self.rolling_windows:
-            X[f"roll_mean_{window}"] = y.shift(1).rolling(window).mean()
-
-            X[f"roll_std_{window}"] = y.shift(1).rolling(window).std()
-
-        # X["diff_1"] = (
-        #     y.diff(1)
-        # )
-        X = X.dropna()
-        X = X.drop(
-            columns=[
-                "date",
-            ]
-        )
-        return X
+            group = df.groupby("city_id")["target"]
+            df[f"roll_mean_{window}"] = group.shift(1).transform(
+                lambda x: x.rolling(window).mean()
+            )
+            df[f"roll_std_{window}"] = group.shift(1).transform(
+                lambda x: x.rolling(window).std()
+            )
+        # Encoding city_id as LabelEncoding or category type
+        # df['city_id'] = df['city_id'].astype('category')
+        df["diff_1"] = y.shift(1).diff(1)
+        return df.dropna().drop(columns=["target", "date"], errors="ignore")
