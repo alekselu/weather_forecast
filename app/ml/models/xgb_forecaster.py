@@ -25,8 +25,8 @@ class XGBForecaster(ForecastModel):
         X = df.drop(
             columns=[
                 "date",
-                self.target_column,
-            ]
+            ],
+            errors="ignore",
         )
         self.model.fit(X, y)
         return self
@@ -39,23 +39,24 @@ class XGBForecaster(ForecastModel):
                 [
                     X_history,
                     X_future.iloc[: i + 1],
-                ]
+                ],
+                ignore_index=True,
             )
             processed = self.preprocessor.transform(
-                combined, pd.concat([y_history, np.nan])
+                combined, pd.concat([y_history, pd.Series([np.nan])], ignore_index=True)
             )
 
             latest = processed.iloc[-1:]
             X = latest.drop(
                 columns=[
                     "date",
-                ]
+                ],
+                errors="ignore",
             )
             pred = self.model.predict(X)[0]
-            predictions = pd.concat([predictions, pred])
+            predictions = pd.concat([predictions, pd.Series([pred])], ignore_index=True)
             next_row = X_future.iloc[i : i + 1].copy()
-            # next_row[self.target_column] = pred
-            X_history = pd.concat([X_history, next_row])
+            X_history = pd.concat([X_history, next_row], ignore_index=True)
         return predictions
 
     def save(self, path):

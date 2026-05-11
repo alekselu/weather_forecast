@@ -13,7 +13,7 @@ class SARIMAXPreprocessor(DatasetPreprocessor):
     def transform(
         self,
         X: pd.DataFrame,
-        y: pd.Series,
+        y: pd.Series = None,
     ):
         X = X.copy()
         X = self.calendar_builder.transform(X)

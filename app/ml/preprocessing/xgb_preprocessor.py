@@ -44,4 +44,4 @@ class XGBPreprocessor(DatasetPreprocessor):
                 "date",
             ]
         )
-        return X, y
+        return X

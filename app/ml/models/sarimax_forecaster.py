@@ -14,10 +14,10 @@ class SARIMAXForecaster(ForecastModel):
     def __init__(
         self,
         order=(1, 1, 1),
-        seasonal_order=(1, 1, 1),
+        # seasonal_order=(1, 1, 1),
     ):
         self.order = order
-        self.seasonal_order = seasonal_order
+        # self.seasonal_order = seasonal_order
         self.preprocessor = SARIMAXPreprocessor()
         self.model = None
         self.results = None
@@ -26,8 +26,8 @@ class SARIMAXForecaster(ForecastModel):
         df = self.preprocessor.transform(X, y)
         X = df[
             [
-                "day_sin",
-                "day_cos",
+                "day_of_year_sin",
+                "day_of_year_cos",
                 "weekday_sin",
                 "weekday_cos",
                 "month_sin",
@@ -38,7 +38,7 @@ class SARIMAXForecaster(ForecastModel):
             endog=y,
             exog=X,
             order=self.order,
-            seasonal_order=self.seasonal_order,
+            # seasonal_order=self.seasonal_order,
             enforce_stationarity=False,
             enforce_invertibility=False,
         )
@@ -49,8 +49,8 @@ class SARIMAXForecaster(ForecastModel):
         X_future = self.preprocessor.transform(X_future)
         X_future = X_future[
             [
-                "day_sin",
-                "day_cos",
+                "day_of_year_sin",
+                "day_of_year_cos",
                 "weekday_sin",
                 "weekday_cos",
                 "month_sin",
