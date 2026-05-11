@@ -104,7 +104,7 @@ class ApiDbProxy:
         db_lat: float = db_city.latitude
         db_lon: float = db_city.longitude
 
-        if db_lat != response.coords.latitude and db_lon != response.coords.longitude:
+        if db_lat != response.coords.latitude or db_lon != response.coords.longitude:
             logging.warning(
                 f"For {city} coordinates from request {response.coords} "
                 f"and DB {Coordinates(db_lat, db_lon)} does not match"
