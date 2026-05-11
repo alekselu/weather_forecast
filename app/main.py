@@ -97,16 +97,16 @@ async def get_forecast(
 
     Returns
     -------
-    dict[str, Any]
-        A dictionary containing:
+    ForecastResponse
+        A dataclass containing:
         - 'time': The requested forecast date
         - 'city': The city name
-        - 'coords': Either geographical coordinates as a string if found,
-          or an error message if location fetch failed
         - 'country_code': The country code used
         - 'params': The list of requested weather parameters
+        - 'coords': Either geographical coordinates as a string if found,
+          or an error message if location fetch failed
+        - 'payload': Fetched results according to specified parameters
     """
-    result: Dict[str, Any] = {}
     result: Dict[str, Any] = {
         "time": time,
         "city": city,
