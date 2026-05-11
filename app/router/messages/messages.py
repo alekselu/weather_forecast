@@ -66,6 +66,9 @@ class DataParams(ABC):
     def field_names(cls) -> tuple[str, ...]:
         return tuple(f.name for f in fields(cls))
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass
 class DailyDataParams(DataParams):
@@ -143,6 +146,9 @@ class ResponseSpecificParams:
     @classmethod
     def as_params_names(cls) -> tuple[str, ...]:
         return tuple(f.name for f in fields(cls))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
 
 
 @dataclass

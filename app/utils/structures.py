@@ -14,6 +14,12 @@ class City:
     country_code: str = "ru"
 
 
+@dataclass
+class Place:
+    city: City
+    coords: Coordinates
+
+
 class TimePeriod(StrEnum):
     DAILY = "daily"
     HOURLY = "hourly"
