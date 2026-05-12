@@ -56,7 +56,7 @@ async def _process_request(
 
     _verify_requets(request, db_proxy)
     response: PlacedResponseData = await router.send_request(request)
-    logger.info(response.data)
+    logger.debug(response.data)
     return response
 
 
@@ -84,7 +84,6 @@ async def main():
         cities = db_proxy.get_all_cities()
 
     for city in cities:
-
         necessary_params = RequiredRequestParams(coords=city.coords)
         time_params = _get_tme_period_for_update()
 

@@ -78,7 +78,7 @@ class GeoCoder:
             direction=Direction.FROM,
             query={
                 "city": place.name,
-                "country_codes": place.country_code,
+                "country_code": place.country_code,
             },
             exactly_one=True,
         )
