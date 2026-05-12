@@ -11,8 +11,9 @@ from app.router.messages.messages import (
 from app.router.router import AsyncRouter
 from app.db.utils import ApiDbProxy
 from app.core.logging import setup_logging
-from app.utils.structures import TimePeriod, Place
+from app.utils.structures import TimePeriod, Place, City, Coordinates
 from app.core.logging import LoggerAdapter
+from app.utils.geolocation import get_geo_coder, GeoCoder
 
 setup_logging()
 
@@ -20,11 +21,14 @@ default_logger = logging.getLogger(__name__)
 
 logger = LoggerAdapter("CRON", default_logger)
 
+INTERNAL_DB_FIELDS = {"id", "city_id", "date"}
+
 
 def _verify_requets(request: Request, db_proxy: ApiDbProxy) -> None:
     request_fields = request.requested_params()
     for time_period, params in request_fields.items():
         db_fields = set(db_proxy.get_period_table_params(time_period))
+        db_fields -= INTERNAL_DB_FIELDS
         params_set = set(params)
 
         if params_set == db_fields:
@@ -69,6 +73,16 @@ async def main():
     db_proxy = ApiDbProxy()
 
     cities: list[Place] = db_proxy.get_all_cities()
+
+    # FOR DEBUG. TODO: need to think, how organize new cities insertion
+    if len(cities) == 0:
+        city = City("Saint Petersburg", "ru")
+        geo_coder: GeoCoder = get_geo_coder()
+        coords: Coordinates = await geo_coder.fetch_location_from(city)
+
+        db_proxy.insert_city(city, coords)
+        cities = db_proxy.get_all_cities()
+
     for city in cities:
 
         necessary_params = RequiredRequestParams(coords=city.coords)
