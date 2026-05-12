@@ -1,6 +1,6 @@
-from dataclasses import dataclass, fields, asdict
+from dataclasses import dataclass, fields, field, asdict
 from datetime import date, datetime
-from typing import ClassVar, Any, Dict
+from typing import ClassVar, Any, Dict, Optional
 from abc import ABC, abstractmethod
 from enum import StrEnum
 
@@ -16,10 +16,20 @@ class ISimpleParams(ABC):
 
 @dataclass
 class RequiredRequestParams(ISimpleParams):
-    coords: Coordinates
+    coords: Coordinates = field(init=False)
 
-    def __init__(self, latitude: float, longitude: float) -> None:
-        self.coords = Coordinates(latitude, longitude)
+    def __init__(
+        self,  # No overloading in Python(
+        coords: Optional[Coordinates] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+    ):
+        if coords is not None:
+            self.coords = coords
+        elif latitude is not None and longitude is not None:
+            self.coords = Coordinates(latitude, longitude)
+        else:
+            raise ValueError("Either provide coords or both latitude and longitude")
 
     def as_params(self) -> Dict[str, str]:
         return asdict(self.coords)

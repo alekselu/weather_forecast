@@ -1,13 +1,12 @@
 import logging
 from sqlalchemy import inspect
 from typing import Dict, Any
-from typing import TypeAliasType
 from app.db.session import ConnectionParams, get_db_connections
 from app.utils.structures import TimePeriod, Coordinates, City, Place
 from app.core.logging import LoggerAdapter
 from app.router.messages.messages import (
     PlacedResponseData,
-    ResponseParams,
+    DataParams,
     ResponseSpecificParams,
 )
 from app.db.models.city import City as CityTable
@@ -17,7 +16,7 @@ default_logger = logging.getLogger(__name__)
 
 logger = LoggerAdapter("ApiDbProxy", default_logger)
 
-TableType = TypeAliasType("TableType", Any)
+TableType = Any
 
 
 class ApiDbProxy:
@@ -124,4 +123,12 @@ class ApiDbProxy:
                 weather_list.append(weather)
 
             session.add_all(weather_list)
-            session.commit()
+            try:
+                session.commit()
+                logging.info(
+                    f"Successfully inserted {len(weather_list)} records for city {city}"
+                )
+            except Exception as e:
+                session.rollback()
+                logging.error(f"Insertion failed for city {city}: {e}")
+                raise
