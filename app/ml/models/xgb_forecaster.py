@@ -31,7 +31,7 @@ class XGBForecaster(ForecastModel):
         self.model.fit(X, y)
         return self
 
-    def predict(self, X_future, X_history=None, y_history=None):
+    def predict(self, X_future, X_history, y_history):
         X_history = X_history.copy()
         predictions = pd.Series([])
         for i in range(len(X_future)):

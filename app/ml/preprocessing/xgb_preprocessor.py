@@ -48,7 +48,6 @@ class XGBPreprocessor(DatasetPreprocessor):
                 .std()
                 .reset_index(level=0, drop=True)
             )
-        # Encoding city_id as LabelEncoding or category type
-        # df['city_id'] = df['city_id'].astype('category')
+        # df["diff_1"] = grouped["target"].shift(1).diff(1)
         df["diff_1"] = grouped["target"].shift(1).diff(1)
         return df.dropna().drop(columns=["target", "date"], errors="ignore")

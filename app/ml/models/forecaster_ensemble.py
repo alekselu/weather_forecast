@@ -1,4 +1,6 @@
 from collections import defaultdict
+import pandas as pd
+from app.ml.core.forecast_model import ForecastModel
 
 
 class ForecasterEnsemble:

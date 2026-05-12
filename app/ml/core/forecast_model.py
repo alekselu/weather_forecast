@@ -15,8 +15,8 @@ class ForecastModel(ABC):
     def predict(
         self,
         X_future: pd.DataFrame,
-        X_history: pd.Series | None = None,
-        y_history: pd.Series | None = None,
+        X_history: pd.Series,
+        y_history: pd.Series,
     ) -> pd.Series:
         pass
 
