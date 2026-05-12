@@ -88,17 +88,20 @@ Docker Compose поднимает:
 
 ---
 
-## 🛠 Основные команды
+## Основные команды
 
 ```bash
 # запуск
-docker-compose up --build
+docker compose up --build
 
 # остановка
-docker-compose down
+docker compose down
 
 # логи
-docker-compose logs
+docker compose logs
+
+# тесты
+docker exec weather_app pytest
 ```
 
 ---

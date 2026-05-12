@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from geopy.adapters import AioHTTPAdapter
 from geopy.exc import GeocoderServiceError, GeocoderTimedOut, GeocoderUnavailable
 from geopy.extra.rate_limiter import AsyncRateLimiter
+from geopy.exc import GeocoderTimedOut, GeocoderUnavailable, GeocoderServiceError
+from app.core.exceptions import CityNotFoundError
 from geopy.geocoders import Nominatim
 from geopy.location import Location
 
@@ -126,3 +128,11 @@ class GeoCoder:
         )
 
         return self._extract_city_and_country_code(loc)
+
+
+# Module-level singleton
+_geo_coder = GeoCoder()
+
+
+def get_geo_coder() -> GeoCoder:
+    return _geo_coder
