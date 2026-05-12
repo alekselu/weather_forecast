@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 import logging
-from app.core.exceptions import ModelNotAvailableError
 from app.ml.core.base_model import BaseModel, ModelStub
 import pandas as pd
 
@@ -74,7 +73,7 @@ class ModelRegistry:
 
     def predict(self, history: pd.DataFrame, horizon: int) -> float:
         if not self.is_ready:
-            raise ModelNotAvailableError("Registry has no loaded model")
+            raise Exception("Registry has no loaded model")
         return self._model.predict(history, horizon)
 
 

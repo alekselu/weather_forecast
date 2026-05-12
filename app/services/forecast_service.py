@@ -9,7 +9,6 @@ from __future__ import annotations
 from datetime import date, timedelta
 import pandas as pd
 import numpy as np
-from app.core.exceptions import ModelNotAvailableError
 from app.ml.model_registry import FeatureVector, ModelRegistry
 from app.schemas.forecast import ForecastResponse
 from app.utils.geolocation import GeoCoder
@@ -40,7 +39,6 @@ class ForecastService:
 
         Raises:
             CityNotFoundError: If the city cannot be geocoded.
-            ModelNotAvailableError: If no model is loaded.
             InsufficientDataError: If historical data is missing.
         """
         target_date = forecast_date or (date.today() + timedelta(days=1))
@@ -55,7 +53,7 @@ class ForecastService:
 
         # 3. Run prediction
         if not self._registry.is_ready:
-            raise ModelNotAvailableError("No model loaded in registry")
+            raise Exception("No model loaded in registry")
 
         predicted_temp = self._registry.predict(
             features,

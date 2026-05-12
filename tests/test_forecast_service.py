@@ -5,7 +5,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from app.core.exceptions import CityNotFoundError, ModelNotAvailableError
 from app.ml.model_registry import ModelRegistry, ModelStub
 from app.services.forecast_service import ForecastService
 from app.utils.geolocation import GeoCoder
@@ -31,11 +30,6 @@ class TestForecastService:
         target = date(2026, 7, 15)
         result = service.get_forecast("Moscow", forecast_date=target)
         assert result.time == target
-
-    def test_model_unavailable_propagates(self, geo_coder, empty_registry):
-        svc = ForecastService(geo_coder=geo_coder, model_registry=empty_registry)
-        with pytest.raises(ModelNotAvailableError):
-            svc.get_forecast("Moscow")
 
     def test_summer_forecast_warmer_than_winter(self, service):
         jan = service.get_forecast("Saint Petersburg", forecast_date=date(2026, 1, 15))

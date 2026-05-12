@@ -11,6 +11,7 @@ alembic
 once-py
 python-dotenv
 SQLAlchemy
+pandas
 
 black
 isort
