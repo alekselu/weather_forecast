@@ -1,6 +1,9 @@
 import numpy as np
+
 from sklearn.metrics import mean_absolute_error
+
 from sklearn.model_selection import TimeSeriesSplit
+
 from app.ml.models.xgb_forecaster import XGBForecaster
 
 
@@ -9,7 +12,7 @@ class XGBObjective:
         self,
         X,
         y,
-        n_splits=3,
+        n_splits=5,
     ):
         self.X = X
         self.y = y
@@ -26,7 +29,6 @@ class XGBObjective:
             "gamma": trial.suggest_float("gamma", 1e-8, 1.0, log=True),
             "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 1.0, log=True),
             "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 1.0, log=True),
-            "random_state": 42,
         }
         tscv = TimeSeriesSplit(n_splits=self.n_splits)
         maes = []
@@ -42,18 +44,14 @@ class XGBObjective:
                 X_train,
                 y_train,
             )
-
             preds = model.predict(
                 X_future=X_val,
                 X_history=X_train,
                 y_history=y_train,
             )
-
             mae = mean_absolute_error(
                 y_val.iloc[: len(preds)],
                 preds,
             )
-
             maes.append(mae)
-
         return np.mean(maes)
