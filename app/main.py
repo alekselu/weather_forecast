@@ -110,7 +110,6 @@ async def get_forecast(
     result: Dict[str, Any] = {
         "time": time,
         "city": city,
-        "country_code": country_code,
         "params": params,
         "payload": {},
     }

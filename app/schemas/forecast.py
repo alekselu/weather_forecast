@@ -30,7 +30,6 @@ class ForecastRequest(BaseModel):
 class ForecastResponse(BaseModel):
     time: date
     city: str
-    country_code: str = "ru"
     params: list[str]
     coords: str
     payload: dict[str, Any]

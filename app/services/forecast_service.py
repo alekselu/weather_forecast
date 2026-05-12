@@ -10,7 +10,7 @@ from datetime import date, timedelta
 import pandas as pd
 import numpy as np
 from app.core.exceptions import ModelNotAvailableError
-from app.ml.model_registry import FeatureVector, ModelRegistry
+from app.ml.model_registry import ModelRegistry
 from app.schemas.forecast import ForecastResponse
 from app.utils.geolocation import GeoCoder
 from app.utils.fakes import fake_temperature_by_date

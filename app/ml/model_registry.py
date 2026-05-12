@@ -20,27 +20,6 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class FeatureVector:
-    """Input features for temperature prediction."""
-
-    city: str
-    forecast_date: date
-    lat: float
-    lon: float
-    # Populated after DB query (may be None for stub)
-    lag_1: Optional[float] = None
-    lag_2: Optional[float] = None
-    lag_3: Optional[float] = None
-    lag_7: Optional[float] = None
-    lag_14: Optional[float] = None
-    lag_30: Optional[float] = None
-    rolling_mean_7d: Optional[float] = None
-    day_of_year: Optional[int] = None
-    month: Optional[int] = None
-    day_of_week: Optional[int] = None
-
-
 class ModelRegistry:
     """
     Usage:

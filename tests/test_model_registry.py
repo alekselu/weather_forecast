@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from app.core.exceptions import ModelNotAvailableError
-from app.ml.model_registry import FeatureVector, ModelRegistry, ModelStub
+from app.ml.model_registry import ModelRegistry, ModelStub
 from app.utils.fakes import fake_temperature_by_date
 import pandas as pd
 
