@@ -58,6 +58,48 @@ def ts(test_df):
     return test_df
 
 
+@pytest.fixture(scope="session")
+def raw_weather_df():
+    path = Path(__file__).parent.parent / "experiments" / "data_2023_2026.csv"
+    df = pd.read_csv(path, parse_dates=["time"], date_format="%Y-%m-%d")
+    df = df.rename(
+        columns={
+            "time": "date",
+            "temperature_2m_mean (°C)": "temperature",
+        }
+    )
+    return df
+
+
+@pytest.fixture(scope="session")
+def target_column():
+    return "temperature"
+
+
+@pytest.fixture(scope="session")
+def weather_df(
+    raw_weather_df,
+    target_column,
+):
+    df = raw_weather_df.copy()
+    df = df.sort_values("date").set_index("date")
+    return df
+
+
+@pytest.fixture(scope="session")
+def X(weather_df, target_column):
+    return weather_df.drop(
+        columns=[
+            target_column,
+        ]
+    )
+
+
+@pytest.fixture(scope="session")
+def y(weather_df, target_column):
+    return weather_df[target_column]
+
+
 # ── Isolated service fixtures ────────────────────────────────────────────────
 
 

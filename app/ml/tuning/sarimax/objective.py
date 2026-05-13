@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import TimeSeriesSplit
 from app.ml.models.sarimax_forecaster import SARIMAXForecaster
+from app.ml.tuning.base.split import VaryingStepSeriesSplit
 
 
 class SARIMAXObjective:
@@ -22,6 +23,7 @@ class SARIMAXObjective:
             trial.suggest_int("q", 0, 3),
         )
         tscv = TimeSeriesSplit(n_splits=self.n_splits)
+        tscv = VaryingStepSeriesSplit()
         maes = []
         for train_idx, val_idx in tscv.split(self.X):
             X_train = self.X.iloc[train_idx]
