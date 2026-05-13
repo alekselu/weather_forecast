@@ -21,7 +21,6 @@ from app.services.forecast_service import ForecastService
 import sys
 from pathlib import Path
 
-
 # ── Isolated service fixtures ────────────────────────────────────────────────
 
 

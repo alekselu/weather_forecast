@@ -44,6 +44,7 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_PORT: ${POSTGRES_PORT}
       DATABASE_URL: ${DATABASE_URL}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
       - .:/app
     ports:
@@ -82,6 +83,7 @@ services:
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
 volumes:
   postgres_data:

@@ -7,7 +7,8 @@ from app.core.logging import setup_logging
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
 from app.ml.model_registry import ModelRegistry, get_model_registry
 from app.services.forecast_service import ForecastService
-from app.utils.geolocation import GeoCoder, City, Coordinates, get_geo_coder
+from app.utils.structures import City, Coordinates
+from app.utils.geolocation import GeoCoder, get_geo_coder
 
 setup_logging()
 import logging
