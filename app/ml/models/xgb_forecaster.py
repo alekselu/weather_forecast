@@ -4,9 +4,7 @@ import numpy as np
 
 from xgboost import XGBRegressor
 
-from app.ml.preprocessing.xgb_preprocessor import (
-    XGBPreprocessor,
-)
+from app.ml.preprocessing.xgb_preprocessor import XGBPreprocessor
 from app.ml.core.forecast_model import ForecastModel
 
 
@@ -21,13 +19,14 @@ class XGBForecaster(ForecastModel):
         self.model = XGBRegressor(**self.params) if model is None else model
 
     def fit(self, X, y):
-        df = self.preprocessor.transform(X, y)
-        X = df.drop(
+        X, y = self.preprocessor.transform(X, y)
+        X = X.drop(
             columns=[
                 "date",
             ],
             errors="ignore",
         )
+        print(f"In fit: {len(X)}, {len(y)}")
         self.model.fit(X, y)
         return self
 
@@ -42,11 +41,11 @@ class XGBForecaster(ForecastModel):
                 ],
                 ignore_index=True,
             )
-            processed = self.preprocessor.transform(
+            X_processed, y_processed = self.preprocessor.transform(
                 combined, pd.concat([y_history, y_history[-1:]], ignore_index=True)
             )
 
-            latest = processed.iloc[-1:]
+            latest = X_processed.iloc[-1:]
             X = latest.drop(
                 columns=[
                     "date",

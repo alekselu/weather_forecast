@@ -8,5 +8,5 @@ class DatasetPreprocessor(ABC):
         self,
         X: pd.DataFrame,
         y: pd.Series,
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, pd.Series]:
         pass

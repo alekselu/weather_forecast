@@ -68,6 +68,7 @@ def raw_weather_df():
             "temperature_2m_mean (°C)": "temperature",
         }
     )
+    df["city_id"] = 1
     return df
 
 
@@ -82,7 +83,7 @@ def weather_df(
     target_column,
 ):
     df = raw_weather_df.copy()
-    df = df.sort_values("date").set_index("date")
+    df = df.sort_values("date")
     return df
 
 

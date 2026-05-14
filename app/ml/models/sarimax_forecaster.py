@@ -23,7 +23,7 @@ class SARIMAXForecaster(ForecastModel):
         self.results = None
 
     def fit(self, X, y):
-        df = self.preprocessor.transform(X, y)
+        df, y = self.preprocessor.transform(X, y)
         X = df[
             [
                 "day_of_year_sin",
@@ -46,7 +46,7 @@ class SARIMAXForecaster(ForecastModel):
         return self
 
     def predict(self, X_future, X_history=None, y_history=None):
-        X_future = self.preprocessor.transform(X_future)
+        X_future, _ = self.preprocessor.transform(X_future)
         X_future = X_future[
             [
                 "day_of_year_sin",

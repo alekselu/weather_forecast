@@ -11,13 +11,16 @@ alembic
 once-py
 python-dotenv
 SQLAlchemy
+pandas
+numpy
+scikit-learn
+xgboost
+optuna
+statsmodels
+
 
 black
 isort
 
 
 # for ipynb
-# pandas
-# numpy
-# scikit-learn
-# xgboost

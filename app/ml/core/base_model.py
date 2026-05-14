@@ -9,7 +9,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def fit(self, df: pd.DataFrame) -> BaseModel:
+    def fit(self, df: pd.DataFrame):
         pass
 
     @abstractmethod
@@ -17,7 +17,7 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def update(self, new_data: pd.DataFrame) -> BaseModel:
+    def update(self, new_data: pd.DataFrame):
         pass
 
     @abstractmethod
@@ -26,7 +26,7 @@ class BaseModel(ABC):
 
     @classmethod
     @abstractmethod
-    def load(cls, path: str) -> BaseModel:
+    def load(cls, path: str):
         pass
 
 

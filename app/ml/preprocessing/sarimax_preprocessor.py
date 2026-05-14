@@ -22,4 +22,4 @@ class SARIMAXPreprocessor(DatasetPreprocessor):
                 "date",
             ]
         )
-        return X
+        return X, y

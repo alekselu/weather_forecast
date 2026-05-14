@@ -50,4 +50,5 @@ class XGBPreprocessor(DatasetPreprocessor):
             )
         # df["diff_1"] = grouped["target"].shift(1).diff(1)
         df["diff_1"] = grouped["target"].shift(1).diff(1)
-        return df.dropna().drop(columns=["target", "date"], errors="ignore")
+        dropped = df.dropna().drop(columns=["date"], errors="ignore")
+        return dropped.drop(columns=["target"]), dropped["target"]

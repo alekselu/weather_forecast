@@ -12,14 +12,13 @@ class XGBObjective:
         self,
         X,
         y,
-        n_splits=5,
+        n_splits=3,
     ):
         self.X = X
         self.y = y
         self.n_splits = n_splits
 
     def __call__(self, trial):
-
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 100, 1000),
             "max_depth": trial.suggest_int("max_depth", 3, 10),

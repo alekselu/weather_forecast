@@ -1,13 +1,12 @@
 import optuna
-from app.ml.tuning.xgb.objective import XGBObjective
+from app.ml.tuning.sarimax.objective import SARIMAXObjective
 
 
-def test_xgb_objective_with_real_optuna(
+def test_sarimax_objective_with_real_optuna(
     X,
     y,
 ):
-    print(f"{X.columns = }")
-    objective = XGBObjective(X=X, y=y, n_splits=2)
+    objective = SARIMAXObjective(X=X, y=y, n_splits=2)
     sampler = optuna.samplers.TPESampler(seed=42)
     study = optuna.create_study(direction="minimize", sampler=sampler)
     study.optimize(objective, n_trials=2)
@@ -17,5 +16,6 @@ def test_xgb_objective_with_real_optuna(
         study.best_params,
         dict,
     )
-    assert "n_estimators" in study.best_params
-    assert "max_depth" in study.best_params
+    assert "p" in study.best_params
+    assert "d" in study.best_params
+    assert "q" in study.best_params
