@@ -16,10 +16,8 @@ import numpy as np
 from fastapi.testclient import TestClient
 from app.main import app, get_geo_coder
 from app.ml.model_registry import get_model_registry
-
 from app.ml.model_registry import ModelRegistry, ModelStub
 from app.utils.geolocation import GeoCoder
-from app.services.forecast_service import ForecastService
 import sys
 from pathlib import Path
 
@@ -113,22 +111,9 @@ def model_registry() -> ModelRegistry:
 
 
 @pytest.fixture
-def empty_registry() -> ModelRegistry:
-    """Registry with NO model loaded — simulates cold start / model failure."""
-    return ModelRegistry()
-
-
-@pytest.fixture
 def geo_coder() -> GeoCoder:
     """GeoCoder service."""
     return GeoCoder()
-
-
-@pytest.fixture
-def forecast_service(
-    geo_coder: GeoCoder, model_registry: ModelRegistry
-) -> ForecastService:
-    return ForecastService(geo_coder=geo_coder, model_registry=model_registry)
 
 
 # ── FastAPI test client ──────────────────────────────────────────────────────
@@ -137,15 +122,6 @@ def forecast_service(
 @pytest.fixture
 def client(model_registry, geo_coder):
     app.dependency_overrides[get_model_registry] = lambda: model_registry
-    app.dependency_overrides[get_geo_coder] = lambda: geo_coder
-    with TestClient(app) as c:
-        yield c
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
-def client_no_model(empty_registry, geo_coder):
-    app.dependency_overrides[get_model_registry] = lambda: empty_registry
     app.dependency_overrides[get_geo_coder] = lambda: geo_coder
     with TestClient(app) as c:
         yield c

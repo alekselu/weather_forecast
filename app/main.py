@@ -5,8 +5,6 @@ from app import db
 from datetime import date
 from app.core.logging import setup_logging
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
-from app.ml.model_registry import ModelRegistry, get_model_registry
-from app.services.forecast_service import ForecastService
 from app.utils.geolocation import GeoCoder, City, Coordinates, get_geo_coder
 
 setup_logging()
@@ -27,16 +25,6 @@ app.add_middleware(
 )
 
 geocoder = GeoCoder()
-
-# ── Dependency factories ─────────────────────────────────────────────────────
-
-
-def get_forecast_service(
-    geo: Annotated[GeoCoder, Depends(get_geo_coder)],
-    registry: Annotated[ModelRegistry, Depends(get_model_registry)],
-) -> ForecastService:
-    return ForecastService(geo_coder=geo, model_registry=registry)
-
 
 # ── Endpoints ────────────────────────────────────────────────────────────────
 
