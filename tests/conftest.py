@@ -1,10 +1,5 @@
 """
 Shared pytest fixtures for all test layers.
-
-Design principles:
-- Each test gets a fresh app instance (no shared state between tests).
-- The model registry is pre-loaded with ModelStub (no external dependencies).
-- GeoService uses offline mode (no real Nominatim calls during tests).
 """
 
 from __future__ import annotations
@@ -15,8 +10,6 @@ import pandas as pd
 import numpy as np
 from fastapi.testclient import TestClient
 from app.main import app, get_geo_coder
-from app.ml.model_registry import get_model_registry
-from app.ml.model_registry import ModelRegistry, ModelStub
 from app.utils.geolocation import GeoCoder
 import sys
 from pathlib import Path
@@ -103,14 +96,6 @@ def y(weather_df, target_column):
 
 
 @pytest.fixture
-def model_registry() -> ModelRegistry:
-    """Fresh registry with stub model loaded."""
-    registry = ModelRegistry()
-    registry.load(ModelStub())
-    return registry
-
-
-@pytest.fixture
 def geo_coder() -> GeoCoder:
     """GeoCoder service."""
     return GeoCoder()
@@ -120,9 +105,7 @@ def geo_coder() -> GeoCoder:
 
 
 @pytest.fixture
-def client(model_registry, geo_coder):
-    app.dependency_overrides[get_model_registry] = lambda: model_registry
-    app.dependency_overrides[get_geo_coder] = lambda: geo_coder
+def client():
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
