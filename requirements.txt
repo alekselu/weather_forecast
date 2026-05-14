@@ -21,6 +21,3 @@ statsmodels
 
 black
 isort
-
-
-# for ipynb

@@ -4,7 +4,8 @@ from unittest.mock import AsyncMock
 from dataclasses import astuple
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
-from app.utils.geolocation import GeoCoder, Direction, Coordinates, City
+from app.utils.geolocation import GeoCoder, Direction
+from app.utils.structures import City, Coordinates
 
 TEST_CASES = [
     (City("Berlin", "de"), Coordinates(52.52, 13.40)),

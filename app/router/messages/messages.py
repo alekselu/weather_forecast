@@ -1,10 +1,10 @@
-from dataclasses import dataclass, fields, asdict
+from dataclasses import dataclass, fields, field, asdict
 from datetime import date, datetime
-from typing import ClassVar, Any, Dict
+from typing import ClassVar, Any, Dict, Optional
 from abc import ABC, abstractmethod
 from enum import StrEnum
 
-from app.utils.structures import TimePeriod
+from app.utils.structures import TimePeriod, Coordinates
 
 
 @dataclass
@@ -16,11 +16,26 @@ class ISimpleParams(ABC):
 
 @dataclass
 class RequiredRequestParams(ISimpleParams):
-    latitude: float
-    longitude: float
+    coords: Coordinates = field(init=False)
+
+    def __init__(
+        self,  # No overloading in Python(
+        coords: Optional[Coordinates] = None,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+    ):
+        if coords is not None:
+            self.coords = coords
+        elif latitude is not None and longitude is not None:
+            self.coords = Coordinates(latitude, longitude)
+        else:
+            raise ValueError("Either provide coords or both latitude and longitude")
 
     def as_params(self) -> Dict[str, str]:
-        return asdict(self)
+        return asdict(self.coords)
+
+    def coordinates(self) -> Coordinates:
+        return self.coords
 
 
 @dataclass
@@ -61,6 +76,9 @@ class DataParams(ABC):
     def field_names(cls) -> tuple[str, ...]:
         return tuple(f.name for f in fields(cls))
 
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass
 class DailyDataParams(DataParams):
@@ -100,7 +118,7 @@ def data_params_by_period(time_period: TimePeriod, **kwargs) -> DataParams:
 
 @dataclass
 class Request:
-    geo_params: RequiredRequestParams
+    required_params: RequiredRequestParams
     time_params: TimeRequestParams
     time_periods: list[TimePeriod]
     type: str = "GET"
@@ -108,7 +126,7 @@ class Request:
 
     def provided_params(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
-        result |= self.geo_params.as_params()
+        result |= self.required_params.as_params()
         result |= self.time_params.as_params()
         return result
 
@@ -127,6 +145,9 @@ class Request:
             result[period] = variable_names
         return result
 
+    def coordinates(self) -> Coordinates:
+        return self.required_params.coordinates()
+
 
 @dataclass
 class ResponseSpecificParams:
@@ -135,6 +156,9 @@ class ResponseSpecificParams:
     @classmethod
     def as_params_names(cls) -> tuple[str, ...]:
         return tuple(f.name for f in fields(cls))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
 
 
 @dataclass
@@ -150,3 +174,9 @@ class ResponseParams(TimeFormat):
 @dataclass
 class ResponseData:
     data: list[ResponseParams]
+
+
+@dataclass
+class PlacedResponseData:
+    coords: Coordinates
+    data: ResponseData

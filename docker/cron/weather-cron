@@ -1,5 +1,6 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
-* * * * * root cd /app && /usr/local/bin/python3 -u -m app.update_data.update_data >> /proc/1/fd/1 2>> /proc/1/fd/2
-* * * * * root echo "[CRON HEARTBEAT] $(date -Iseconds)" >> /proc/1/fd/1 2>> /proc/1/fd/2
+# * * * * * root cd /app && /usr/local/bin/python3 -u -m app.update_data.update_data >> /proc/1/fd/1 2>> /proc/1/fd/2
+0 6 * * * root cd /app && /usr/local/bin/python3 -u -m app.update_data.update_data >> /proc/1/fd/1 2>> /proc/1/fd/2
+0 6 * * * root echo "[CRON HEARTBEAT] $(date -Iseconds)" >> /proc/1/fd/1 2>> /proc/1/fd/2

@@ -1,21 +1,42 @@
 import logging
+from dataclasses import dataclass
 from sqlalchemy import inspect
+from typing import Dict, Any
 from app.db.session import ConnectionParams, get_db_connections
-from app.utils.structures import TimePeriod
+from app.utils.structures import TimePeriod, Coordinates, City, Place
 from app.core.logging import LoggerAdapter
+from app.router.messages.messages import (
+    PlacedResponseData,
+    DataParams,
+    ResponseSpecificParams,
+)
+from app.db.models.city import City as CityTable
+from app.db.models.weather_daily import WeatherDaily
 
 default_logger = logging.getLogger(__name__)
 
 logger = LoggerAdapter("ApiDbProxy", default_logger)
 
+TableType = Any
+
+
+@dataclass(frozen=True)
+class CityDbData:
+    id: int
+    name: str
+    latitude: float
+    longitude: float
+
 
 class ApiDbProxy:
     connection: ConnectionParams = get_db_connections()
 
-    def _from_time_period_to_table_name(self, time_period: TimePeriod) -> str:
+    def _from_time_period_to_table_type(
+        self, time_period: TimePeriod
+    ) -> type[TableType]:
         match time_period:
             case TimePeriod.DAILY:
-                return "weather_daily"
+                return WeatherDaily
             case TimePeriod.HOURLY:
                 raise ValueError("Hourly table is not supported now")
             case _:
@@ -33,5 +54,104 @@ class ApiDbProxy:
         return [col["name"] for col in columns]
 
     def get_period_table_params(self, time_period: TimePeriod) -> list[str]:
-        table_name = self._from_time_period_to_table_name(time_period)
+        table: TableType = self._from_time_period_to_table_type(time_period)
+        table_name = table.__tablename__
         return self.get_column_names(table_name)
+
+    def insert_city(self, city: City, coords: Coordinates):
+        with self.connection.session_scope() as session:
+            db_city = CityTable(
+                name=city.name, latitude=coords.latitude, longitude=coords.longitude
+            )
+            if city.country_code != "ru":
+                logging.warning(
+                    f"For {city} country code: {city.country_code} will be ignored!"
+                )
+            session.add(db_city)
+            session.commit()
+            session.refresh(db_city)
+            logger.info(f"City {city} has been inserted")
+
+    def check_city_existence(self, city: City) -> CityDbData:
+        with self.connection.get_session() as session:
+            cities = session.query(CityTable).filter_by(name=city.name).all()
+
+            if len(cities) == 0:
+                raise ValueError(f"No city found with name '{city.name}'")
+
+            if len(cities) > 1:
+                raise ValueError(
+                    f"Multiple cities ({len(cities)}) found with name '{city.name}'"
+                )
+
+            db_city = cities[0]
+
+            return CityDbData(
+                id=int(db_city.id),
+                name=str(db_city.name),
+                latitude=float(db_city.latitude),
+                longitude=float(db_city.longitude),
+            )
+
+    def get_all_cities(self) -> list[Place]:
+        with self.connection.session_scope() as session:
+            db_cities: list[CityTable] = session.query(CityTable).all()
+            cities: list[Place] = []
+            for db_city in db_cities:
+                cities.append(
+                    Place(
+                        city=City(str(db_city.name)),
+                        coords=Coordinates(
+                            float(db_city.latitude), float(db_city.longitude)
+                        ),
+                    )
+                )
+            return cities
+
+    @staticmethod
+    def _convert_request_params_to_db_format(
+        params: ResponseSpecificParams,
+    ) -> Dict[str, Any]:
+        data = params.to_dict()
+        data["date"] = data.pop("time")
+        return data
+
+    def insert_into_table(self, city: City, response: PlacedResponseData):
+        db_city = self.check_city_existence(city)
+
+        db_lat = db_city.latitude
+        db_lon = db_city.longitude
+
+        if db_lat != response.coords.latitude or db_lon != response.coords.longitude:
+            logging.warning(
+                f"For {city} coordinates from request {response.coords} "
+                f"and DB {Coordinates(db_lat, db_lon)} does not match"
+            )
+
+        with self.connection.get_session() as session:
+            weather_list: list[TableType] = []
+
+            for data in response.data.data:
+                table: TableType = self._from_time_period_to_table_type(
+                    data.data_params.time_period()
+                )
+
+                weather = table(
+                    city_id=db_city.id,
+                    **self._convert_request_params_to_db_format(data.params),
+                    **data.data_params.to_dict(),
+                )
+
+                weather_list.append(weather)
+
+            session.add_all(weather_list)
+
+            try:
+                session.commit()
+                logging.info(
+                    f"Successfully inserted {len(weather_list)} records for city {city}"
+                )
+            except Exception as e:
+                session.rollback()
+                logging.error(f"Insertion failed for city {city}: {e}")
+                raise

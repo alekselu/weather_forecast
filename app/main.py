@@ -5,7 +5,8 @@ from app import db
 from datetime import date
 from app.core.logging import setup_logging
 from app.schemas.forecast import ErrorResponse, ForecastResponse, HealthResponse
-from app.utils.geolocation import GeoCoder, City, Coordinates, get_geo_coder
+from app.utils.structures import City, Coordinates
+from app.utils.geolocation import GeoCoder, get_geo_coder
 
 setup_logging()
 import logging

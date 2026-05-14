@@ -52,7 +52,7 @@ class ModelRegistry:
 
     def predict(self, history: pd.DataFrame, horizon: int) -> float:
         if not self.is_ready:
-            raise ValueError("Registry has no loaded model")
+            raise Exception("Registry has no loaded model")
         return self._model.predict(history, horizon)
 
 

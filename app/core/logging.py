@@ -1,12 +1,16 @@
+import os
 import logging
 import sys
 from once import once
+
+log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+print(log_level)
 
 
 @once
 def setup_logging():
     logging.basicConfig(
-        level=logging.INFO,
+        level=getattr(logging, log_level, logging.INFO),
         format="%(levelname)s | %(asctime)s | %(name)s | %(message)s",
         handlers=[logging.StreamHandler(sys.stdout)],
     )

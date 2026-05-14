@@ -8,6 +8,7 @@ from app.router.messages.messages import (
     DataParams,
     ResponseParams,
     ResponseSpecificParams,
+    PlacedResponseData,
     data_params_by_period,
 )
 from app.utils.structures import TimePeriod
@@ -64,7 +65,7 @@ class AsyncRouter:
 
     def _build_response(
         self, request: Request, response: httpx.Response
-    ) -> ResponseData:
+    ) -> PlacedResponseData:
         payload = response.json()
         requested_params = request.requested_params()
         periods = requested_params.keys()
@@ -97,9 +98,11 @@ class AsyncRouter:
                     ResponseParams(params=params, data_params=data_params)
                 )
 
-        return ResponseData(data=parsed_items)
+        return PlacedResponseData(
+            coords=request.coordinates(), data=ResponseData(data=parsed_items)
+        )
 
-    async def send_request(self, request: Request) -> ResponseData:
+    async def send_request(self, request: Request) -> PlacedResponseData:
         constructed_request = self._build_request(request)
         response = await self._send_request(constructed_request)
         try:
