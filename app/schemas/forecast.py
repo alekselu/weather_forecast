@@ -26,12 +26,20 @@ class ForecastRequest(BaseModel):
 # ── Response schemas ─────────────────────────────────────────────────────────
 
 
+class ForecastPayload(BaseModel):
+    """Class containing results for all parameters requested in each category."""
+
+    hourly: dict[str, list] = {}
+    daily: dict[str, list] = {}
+
+
 class ForecastResponse(BaseModel):
-    time: date
+    start_date: date
+    end_date: date
     city: str
     params: list[str]
     coords: str
-    payload: dict[str, Any]
+    payload: ForecastPayload
 
 
 class HealthResponse(BaseModel):
