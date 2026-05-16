@@ -39,16 +39,22 @@ services:
         condition: service_healthy
     environment:
       DB_HOST: ${POSTGRES_HOST}
+      DB_PORT: ${POSTGRES_PORT}
       DB_NAME: ${POSTGRES_DB}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_PORT: ${POSTGRES_PORT}
+      MODEL_PATH: /models
+      RETRAIN_HOUR: ${ML_RETRAIN_HOUR:-2}
+      RETRAIN_MINUTE: ${ML_RETRAIN_MINUTE:-0}
       DATABASE_URL: ${DATABASE_URL}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      ML_SERVICE_URL: http://localhost:8001
     volumes:
       - .:/app
+      - ml_models:app/models
     ports:
       - "8000:8000"
+      - "8001:8001"
     command: >
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
@@ -87,4 +93,4 @@ services:
 
 volumes:
   postgres_data:
-
+  ml_models:

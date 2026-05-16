@@ -3,11 +3,15 @@ psycopg[binary]
 geopy
 python-dotenv
 httpx
+joblib
 geopy
 pytest
 pytest-asyncio
 aiohttp
 alembic
+pydantic
+pydantic-settings
+apscheduler
 once-py
 python-dotenv
 SQLAlchemy
@@ -17,6 +21,7 @@ scikit-learn
 xgboost
 optuna
 statsmodels
+
 
 
 black
