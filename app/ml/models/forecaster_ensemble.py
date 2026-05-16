@@ -1,5 +1,6 @@
 from collections import defaultdict
 import pandas as pd
+import joblib, os
 from app.ml.core.forecast_model import ForecastModel
 
 
@@ -32,3 +33,11 @@ class ForecasterEnsemble:
             raise ValueError(f"No model found for {target} in {city}")
 
         return model.predict(X_future, X_history, y_history)
+
+    def save(self, path: str) -> None:
+        os.makedirs(path, exist_ok=True)
+        joblib.dump(self, os.path.join(path, "ensemble.pkl"))
+
+    @classmethod
+    def load(cls, path: str) -> "ForecasterEnsemble":
+        return joblib.load(os.path.join(path, "ensemble.pkl"))

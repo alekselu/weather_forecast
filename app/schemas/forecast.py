@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Optional, Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # ── Request schemas ──────────────────────────────────────────────────────────
 
@@ -52,3 +52,37 @@ class ErrorResponse(BaseModel):
     error: str
     detail: str
     code: str
+
+
+class PredictRequest(BaseModel):
+    latitude: float
+    longitude: float
+    start_date: date
+    end_date: date
+    hourly: list[str] = []
+    daily: list[str] = []
+
+    @model_validator(mode="after")
+    def check_dates(self) -> "PredictRequest":
+        if self.start_date > self.end_date:
+            raise ValueError("start_date must be ≤ end_date")
+        if not self.hourly and not self.daily:
+            raise ValueError("At least one of hourly or daily params must be provided")
+        return self
+
+
+class PredictResponse(BaseModel):
+    hourly: dict[str, list] = {}
+    daily: dict[str, list] = {}
+
+
+class HealthResponse(BaseModel):
+    status: str  # "ok" | "degraded" | "no_model"
+    model_loaded: bool
+    model_version: str
+    retraining_now: bool
+
+
+class RetrainResponse(BaseModel):
+    status: str  # "started" | "already_running"
+    message: str

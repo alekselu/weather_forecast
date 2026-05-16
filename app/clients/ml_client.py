@@ -3,7 +3,7 @@ import httpx
 from datetime import date
 from pydantic import BaseModel
 
-from app.models.responses import ForecastPayload
+from app.schemas.forecast import ForecastPayload
 
 
 class MLPredictRequest(BaseModel):
