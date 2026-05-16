@@ -60,6 +60,9 @@ class XGBForecaster(ForecastModel):
             print("After pred: ", len(X_history), len(y_history))
         return predictions
 
+    def update(self, X_new, y_new, refit=False):
+        return self.fit(X_new, y_new)
+
     def save(self, path):
         joblib.dump(
             {

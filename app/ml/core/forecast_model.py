@@ -21,6 +21,15 @@ class ForecastModel(ABC):
         pass
 
     @abstractmethod
+    def update(
+        self,
+        X_new: pd.DataFrame,
+        y_new: pd.Series,
+        refit: bool = False,
+    ):
+        pass
+
+    @abstractmethod
     def save(
         self,
         path: str,

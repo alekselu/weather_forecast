@@ -1,9 +1,14 @@
-"""Background retrainin + atomic model swap."""
+"""Background retraining + atomic model swap."""
 import asyncio
 import logging
 import datetime
 from app.ml.registry import ModelRegistry
 from app.ml.models.forecaster_ensemble import ForecasterEnsemble
+from app.db.session import ConnectionParams, get_db_connections
+from app.db.models.city import City
+from app.db.models.weather_daily import WeatherDaily
+from sqlalchemy import select
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +52,29 @@ class Trainer:
         from app.ml.tuning.xgb.tuner import XGBTuner
 
         # ... загрузить данные из БД, обучить, вернуть новый ансамбль
+        conn = get_db_connections()
+        with conn.session_scope() as session:
+            stmt = select(
+                WeatherDaily.date,
+                # информация о городе
+                City.id.label("city_id"),
+                City.name.label("city_name"),
+                City.latitude,
+                City.longitude,
+                # погодные данные
+                WeatherDaily.temperature_2m_mean,
+                WeatherDaily.temperature_2m_min,
+                WeatherDaily.temperature_2m_max,
+                WeatherDaily.precipitation_sum,
+                WeatherDaily.rain_sum,
+                WeatherDaily.snowfall_sum,
+                WeatherDaily.precipitation_hours,
+                WeatherDaily.wind_speed_10m_max,
+                WeatherDaily.relative_humidity_2m_mean,
+                WeatherDaily.sunshine_duration,
+            ).join(City, WeatherDaily.city_id == City.id)
+            df = pd.read_sql(stmt, session.bind)
+
         ensemble = ForecasterEnsemble()
         # пример:
         # for target in TARGETS:

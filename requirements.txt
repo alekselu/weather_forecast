@@ -7,6 +7,7 @@ joblib
 geopy
 pytest
 pytest-asyncio
+anyio
 aiohttp
 alembic
 pydantic

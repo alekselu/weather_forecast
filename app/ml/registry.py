@@ -10,7 +10,7 @@ Predictions (predict) take _active without blocking - readonly operation is safe
 """
 import asyncio
 import logging
-from datetime import datetime
+import datetime
 from typing import Optional
 
 from app.ml.models.forecaster_ensemble import ForecasterEnsemble
@@ -44,8 +44,8 @@ class ModelRegistry:
 
     # ── Init at start ────────────────────────────────────────────
     async def load_from_disk(self, path: str) -> None:
-        """Загрузить сохранённый ансамбль при старте контейнера."""
-        ensemble = ForecasterEnsemble.load(path)  # см. 3.5
+        """Load saved ensemble when the container starts."""
+        ensemble = ForecasterEnsemble.load(path)
         async with self._lock:
             self._active = ensemble
             self._version = self._read_version(path)
@@ -88,4 +88,4 @@ class ModelRegistry:
         if os.path.exists(meta):
             with open(meta) as f:
                 return json.load(f).get("version", "unknown")
-        return datetime.utcnow().strftime("%Y%m%dT%H%M%S")
+        return datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S")
