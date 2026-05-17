@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, BackgroundTasks
-from app.schemas import RetrainResponse
+from app.schemas.forecast import RetrainResponse
 
 router = APIRouter()
 

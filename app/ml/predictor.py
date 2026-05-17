@@ -2,7 +2,7 @@
 from datetime import date, timedelta
 import pandas as pd
 from app.ml.registry import ModelRegistry
-from app.schemas import PredictRequest, PredictResponse
+from app.schemas.forecast import PredictRequest, PredictResponse
 
 
 def _date_range(start: date, end: date) -> list[date]:

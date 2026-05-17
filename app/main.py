@@ -1,5 +1,5 @@
 import httpx
-from fastapi import FastAPI, Query, Depends, HTTPException
+from fastapi import FastAPI, Query, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Any, Annotated, Dict
 from app import db
@@ -7,7 +7,13 @@ from datetime import date
 from app.core.logging import setup_logging
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.schemas.forecast import ErrorResponse, ForecastResponse, ForecastPayload
+from app.schemas.forecast import (
+    ErrorResponse,
+    ForecastResponse,
+    ForecastPayload,
+    PredictRequest,
+    PredictResponse,
+)
 from app.params import classify_params
 from app.utils.structures import City
 from app.clients.ml_client import MLClient, MLPredictRequest

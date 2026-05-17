@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, HTTPException
-from app.schemas import PredictRequest, PredictResponse
+from app.schemas.forecast import PredictRequest, PredictResponse
 
 router = APIRouter()
 
