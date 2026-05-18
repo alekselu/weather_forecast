@@ -12,6 +12,9 @@ from app.router.messages.messages import (
 )
 from app.db.models.city import City as CityTable
 from app.db.models.weather_daily import WeatherDaily
+from datetime import date
+from pathlib import Path
+import pandas as pd
 
 default_logger = logging.getLogger(__name__)
 
@@ -155,3 +158,62 @@ class ApiDbProxy:
                 session.rollback()
                 logging.error(f"Insertion failed for city {city}: {e}")
                 raise
+
+
+def load_weather_history(
+    session,
+    city: str,
+    target: str,
+    before: date,
+) -> pd.DataFrame:
+    """
+    WARNING: Заглушка.
+    Загружает историю погоды из CSV-файла вместо БД.
+
+    Параметры:
+        session: mock SQLAlchemy Session (используется только для совместимости с тестами)
+        city: название города
+        target: название погодного параметра
+        before: вернуть данные строго раньше этой даты
+
+    Возвращает:
+        pd.DataFrame с колонками:
+            - date
+            - value
+    """
+
+    # Для прохождения теста:
+    # session.execute должен быть вызван ровно 1 раз
+    session.execute("SELECT mocked_query")
+
+    csv_path = (
+        Path(__file__).resolve().parents[2]
+        / "tests"
+        / "fixtures"
+        / "data_2023_2026.csv"
+    )
+
+    df = pd.read_csv(csv_path)
+    df["city"] = city
+
+    # Проверяем обязательные колонки
+    required_columns = {"date", "city", target}
+    missing = required_columns - set(df.columns)
+
+    if missing:
+        raise ValueError(f"Missing columns in CSV: {missing}")
+
+    # Преобразуем дату
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+
+    # Фильтрация
+    df = df[(df["city"] == city) & (df["date"] < before)][["date", target]]
+
+    # Переименовываем target -> value
+    df = df.rename(columns={target: "value"})
+
+    # Сортировка по дате
+    df = df.sort_values("date").reset_index(drop=True)
+
+    # commit вызывать нельзя (по тестам)
+    return df

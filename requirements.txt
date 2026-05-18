@@ -3,22 +3,28 @@ psycopg[binary]
 geopy
 python-dotenv
 httpx
+joblib
 geopy
 pytest
 pytest-asyncio
+anyio
 aiohttp
 alembic
+pydantic
+pydantic-settings
+apscheduler
+asgi-lifespan
 once-py
 python-dotenv
 SQLAlchemy
 pandas
+numpy
+scikit-learn
+xgboost
+optuna
+statsmodels
+
+
 
 black
 isort
-
-
-# for ipynb
-# pandas
-# numpy
-# scikit-learn
-# xgboost

@@ -4,7 +4,6 @@ Uses TestClient with dependency overrides — no real DB or geocoder.
 """
 
 from datetime import date, timedelta
-
 import pytest
 
 TOMORROW = str(date.today() + timedelta(days=1))

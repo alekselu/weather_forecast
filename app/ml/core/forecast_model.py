@@ -1,37 +1,51 @@
-from __future__ import annotations
 from abc import ABC, abstractmethod
 import pandas as pd
 
 
-class BaseModel(ABC):
-    @property
+class ForecastModel(ABC):
     @abstractmethod
-    def version(self) -> str:
+    def fit(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series,
+    ):
         pass
 
     @abstractmethod
-    def fit(self, df: pd.DataFrame) -> BaseModel:
+    def predict(
+        self,
+        X_future: pd.DataFrame,
+        X_history: pd.Series,
+        y_history: pd.Series,
+    ) -> pd.Series:
         pass
 
     @abstractmethod
-    def predict(self, history: pd.DataFrame, horizon: int):
+    def update(
+        self,
+        X_new: pd.DataFrame,
+        y_new: pd.Series,
+        refit: bool = False,
+    ):
         pass
 
     @abstractmethod
-    def update(self, new_data: pd.DataFrame) -> BaseModel:
-        pass
-
-    @abstractmethod
-    def save(self, path: str) -> None:
+    def save(
+        self,
+        path: str,
+    ):
         pass
 
     @classmethod
     @abstractmethod
-    def load(cls, path: str) -> BaseModel:
+    def load(
+        cls,
+        path: str,
+    ):
         pass
 
 
-class ModelStub(BaseModel):
+class ModelStub(ForecastModel):
     """
     Stub model — returns a naive seasonal estimate based on latitude and
     day-of-year sinusoidal approximation.
@@ -44,27 +58,14 @@ class ModelStub(BaseModel):
     This is intentionally simple and clearly labelled as a stub.
     """
 
-    VERSION = "stub-v0"
-
-    @property
-    def version(self) -> str:
-        return self.VERSION
-
-    @property
-    def is_ready(self) -> bool:
-        return True  # stub is always ready
-
-    def fit(self, df):
+    def fit(self, X, y):
         return self
 
-    def predict(self, history, horizon):
-        if history.empty:
+    def predict(self, X_future, X_history, y_history):
+        if X_history.empty:
             return 0.0
-        recent_history = history["value"]
+        recent_history = X_history["value"]
         return float(recent_history.mean())
-
-    def update(self, new_data):
-        return self
 
     def save(self, path):
         pass
