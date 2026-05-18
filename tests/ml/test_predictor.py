@@ -41,7 +41,9 @@ def load_csv() -> pd.DataFrame:
         f"Положите data_2023_2026.csv в {FIXTURES_DIR}\n"
         "cp data_2023_2026.csv tests/fixtures/"
     )
-    df = pd.read_csv(CSV_PATH, parse_dates=["date"])
+    df = pd.read_csv(CSV_PATH, parse_dates=["time"], date_format="%Y-%m-%d").rename(
+        columns={"time": "date"}
+    )
     return df.sort_values("date").reset_index(drop=True)
 
 
@@ -245,7 +247,7 @@ class TestPredictorWithCSVHistory:
 
         predictor = Predictor(registry=fake_reg)
 
-        with patch("app.predictor.get_session", return_value=mock_session):
+        with patch("app.ml.predictor.get_session", return_value=mock_session):
             result = predictor.predict(request)
 
         assert len(result.daily[daily_col]) == n_days
@@ -274,7 +276,7 @@ class TestPredictorWithCSVHistory:
         )
 
         predictor = Predictor(registry=fake_reg)
-        with patch("app.predictor.get_session", return_value=mock_session):
+        with patch("app.ml.predictor.get_session", return_value=mock_session):
             result = predictor.predict(request)
 
         for v in result.daily[daily_col]:
@@ -303,7 +305,7 @@ class TestPredictorWithCSVHistory:
         fake_reg.active.predict.return_value = _pd.Series([10.0, 11.0, 12.0])
 
         predictor = Predictor(registry=fake_reg)
-        with patch("app.predictor.get_session", return_value=mock_session):
+        with patch("app.ml.predictor.get_session", return_value=mock_session):
             result = predictor.predict(request)
 
         for v in result.daily[daily_col]:
@@ -329,7 +331,7 @@ class TestPredictorWithCSVHistory:
         fake_reg.active = None
 
         predictor = Predictor(registry=fake_reg)
-        with patch("app.predictor.get_session", return_value=mock_session):
+        with patch("app.ml.predictor.get_session", return_value=mock_session):
             with pytest.raises(RuntimeError, match="[Mm]odel not loaded"):
                 predictor.predict(request)
 

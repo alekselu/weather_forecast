@@ -3,7 +3,8 @@ import httpx
 from datetime import date
 from pydantic import BaseModel
 
-from app.schemas.forecast import ForecastPayload
+from app.schemas.forecast import ForecastPayload, PredictRequest
+from app.ml.predictor import Predictor
 
 
 class MLPredictRequest(BaseModel):
@@ -23,12 +24,18 @@ class MLClient:
         await self._client.aclose()
 
     async def predict(self, request: MLPredictRequest) -> ForecastPayload:
+        print("Inside MLClient::predict", type(self._client))
         response = await self._client.post(
             "/predict",
             json=request.model_dump(mode="json"),
         )
         response.raise_for_status()
         return ForecastPayload(**response.json())
+
+    def sync_predict(
+        self, request: PredictRequest, predictor: Predictor
+    ) -> ForecastPayload:
+        pass
 
     async def health(self) -> dict:
         response = await self._client.get("/health")

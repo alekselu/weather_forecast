@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     DB_USER: str = Field(validation_alias="POSTGRES_USER")
     DB_PASSWORD: str = Field(validation_alias="POSTGRES_PASSWORD")
 
+    ML_SERVICE_URL: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

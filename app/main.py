@@ -102,7 +102,7 @@ def root():
 )
 def check_db() -> dict[str, Any]:
     result: db.DatabaseHealthResponse = db.check_db()
-    return result.to_dict()
+    return {"res": "extra", **result.to_dict()}
 
 
 # Example: GET /forecast?time=2026-05-06&params=temperature&params=humidity&params=wind
@@ -167,8 +167,16 @@ async def get_forecast(
 
     # ── 4. ML container query ───────────────────────────────────────────
     ml_request = MLPredictRequest(
-        latitude=coords.lat,
-        longitude=coords.lon,
+        latitude=coords.latitude,
+        longitude=coords.longitude,
+        start_date=start_date,
+        end_date=end_date,
+        hourly=hourly_params,
+        daily=daily_params,
+    )
+    predict_request = PredictRequest(
+        latitude=coords.latitude,
+        longitude=coords.longitude,
         start_date=start_date,
         end_date=end_date,
         hourly=hourly_params,
@@ -197,6 +205,7 @@ async def get_forecast(
 
 @app.post("/predict", response_model=PredictResponse)
 async def predict(req: PredictRequest, request: Request) -> PredictResponse:
+    print("Reached predict endpoint")
     predictor = request.app.state.predictor
     if not request.app.state.registry.is_ready():
         raise HTTPException(status_code=503, detail="Model not loaded yet")

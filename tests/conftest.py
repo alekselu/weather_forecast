@@ -55,6 +55,67 @@ def csv_hourly_columns(weather_df: pd.DataFrame) -> list[str]:
 # Фейки внешних зависимостей
 # ═══════════════════════════════════════════════════════════════════════════
 
+# tests/fakes.py
+
+from datetime import timedelta
+
+from app.schemas.forecast import ForecastPayload
+
+
+class FakeMLClient:
+    async def predict(self, request):
+        """
+        Генерирует фиктивный ForecastPayload
+        на основе диапазона дат и списка параметров.
+        """
+
+        days = (request.end_date - request.start_date).days + 1
+
+        dates = [
+            (request.start_date + timedelta(days=i)).isoformat() for i in range(days)
+        ]
+
+        daily = {}
+        hourly = {}
+
+        # Daily params
+        for param in request.daily:
+            if "temperature" in param:
+                daily[param] = [10.0 + i for i in range(days)]
+            elif "precipitation" in param:
+                daily[param] = [0.1 * i for i in range(days)]
+            else:
+                daily[param] = [float(i) for i in range(days)]
+
+        # Hourly params
+        total_hours = days * 24
+
+        for param in request.hourly:
+            if "temperature" in param:
+                hourly[param] = [15.0 + (i % 24) * 0.1 for i in range(total_hours)]
+            else:
+                hourly[param] = [float(i) for i in range(total_hours)]
+
+        # Обычно Open-Meteo payload содержит time
+        if daily:
+            daily["time"] = dates
+
+        if hourly:
+            hourly["time"] = [
+                f"{date}T{hour:02d}:00" for date in dates for hour in range(24)
+            ]
+
+        return ForecastPayload(
+            hourly=hourly,
+            daily=daily,
+        )
+
+    async def health(self):
+        return {"status": "ok"}
+
+    async def aclose(self):
+        pass
+
 
 class FakeGeoCoder:
     """
@@ -107,6 +168,11 @@ def fake_geocoder() -> FakeGeoCoder:
 @pytest.fixture
 def fake_db_session() -> FakeAsyncSession:
     return FakeAsyncSession()
+
+
+@pytest.fixture
+def fake_ml_client() -> FakeMLClient:
+    return FakeMLClient()
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -181,13 +247,14 @@ def fake_registry_retraining():
 async def client(fake_geocoder, fake_registry_ready):
     """Client: GeoCoder and Registry work as intended."""
     from app.main import app
-    from app.dependencies import get_geo_coder, get_model_registry
+    from app.dependencies import get_geo_coder, get_model_registry, get_ml_client
 
     app.dependency_overrides[get_geo_coder] = lambda: fake_geocoder
     app.dependency_overrides[get_model_registry] = lambda: fake_registry_ready
+    # app.dependency_overrides[get_ml_client] = lambda: fake_ml_client
 
     async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://localhost:8000"
     ) as ac:
         yield ac
 
@@ -241,27 +308,6 @@ def valid_daily_params() -> list[str]:
 @pytest.fixture
 def valid_hourly_params() -> list[str]:
     return ["temperature_2m", "precipitation"]
-
-
-def build_forecast_url(
-    city: str = "Saint-Petersburg",
-    start_date: str | None = None,
-    end_date: str | None = None,
-    time: str | None = None,
-    params: list[str] | None = None,
-    country_code: str = "ru",
-) -> str:
-    """Build request string for GET /forecast."""
-    parts = [f"city={city}", f"country_code={country_code}"]
-    if start_date:
-        parts.append(f"start_date={start_date}")
-    if end_date:
-        parts.append(f"end_date={end_date}")
-    if time:
-        parts.append(f"time={time}")
-    for p in params or []:
-        parts.append(f"params={p}")
-    return "/forecast?" + "&".join(parts)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -357,7 +403,7 @@ def geo_coder() -> GeoCoder:
 
 
 @pytest.fixture
-def client():
+def plain_client():
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
