@@ -1,6 +1,8 @@
 """Orchestration of predict-flow: data -> ForecasterEnsemble -> Response."""
 from datetime import date, timedelta
+from pathlib import Path
 import pandas as pd
+from app.params import classify_params
 from app.ml.registry import ModelRegistry
 from app.schemas.forecast import PredictRequest, PredictResponse
 
@@ -52,13 +54,25 @@ class Predictor:
         return result
 
     def _build_features(self, lat, lon, dates) -> pd.DataFrame:
-        raise NotImplementedError
+        df = pd.DataFrame()
+        df["date"] = dates
+        df["lat"] = lat
+        df["lon"] = lon
+        return df
 
     def _build_hourly_features(self, lat, lon, dates) -> pd.DataFrame:
-        raise NotImplementedError
+        return self._build_features(lat=lat, lon=lon, dates=dates)
 
     def _load_history(self, lat, lon, target) -> tuple[pd.DataFrame, pd.Series]:
-        raise NotImplementedError
+        """WARNING: Заглушка до тех пор, пока данные не будут положены в БД."""
+        df = pd.read_csv(
+            Path(__file__).parent.parent.parent / "tests/fixtures/data_2023_2026.csv",
+            parse_dates=["time"],
+            date_format="%Y-%m-%d",
+        ).rename(columns={"time": "date"})
+        df["lat"] = lat
+        df["lon"] = lon
+        return df.drop(columns=[target]), df[target]
 
     def _load_history_hourly(self, lat, lon, target) -> tuple[pd.DataFrame, pd.Series]:
         raise NotImplementedError

@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI):
     import os
 
     ensemble_pkl = os.path.join(settings.MODEL_PATH, "ensemble.pkl")
+    print("In life span")
     if os.path.exists(ensemble_pkl):
         await registry.load_from_disk(settings.MODEL_PATH)
     else:
@@ -118,6 +119,7 @@ def check_db() -> dict[str, Any]:
     },
 )
 async def get_forecast(
+    req: Request,
     city: Annotated[str, Query(description="City name")],
     params: Annotated[list[str], Query(description="Open-Meteo parameter names")] = [],
     start_date: Annotated[
@@ -183,7 +185,8 @@ async def get_forecast(
         daily=daily_params,
     )
     try:
-        payload: ForecastPayload = await ml_client.predict(ml_request)
+        # payload: ForecastPayload = await ml_client.predict(ml_request)
+        payload: ForecastPayload = ml_client.sync_predict(predict_request, req)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 503:
             raise HTTPException(status_code=503, detail="ML model is not available.")

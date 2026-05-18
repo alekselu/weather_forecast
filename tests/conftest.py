@@ -16,6 +16,7 @@ from app.utils.geolocation import GeoCoder
 from unittest.mock import AsyncMock, MagicMock
 import sys
 from pathlib import Path
+from asgi_lifespan import LifespanManager
 
 # ── Paths ───────────────────────────────────────────────────────────────────
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -246,19 +247,25 @@ def fake_registry_retraining():
 @pytest_asyncio.fixture
 async def client(fake_geocoder, fake_registry_ready):
     """Client: GeoCoder and Registry work as intended."""
-    from app.main import app
+    from app.main import app as _app, predictor
     from app.dependencies import get_geo_coder, get_model_registry, get_ml_client
 
-    app.dependency_overrides[get_geo_coder] = lambda: fake_geocoder
-    app.dependency_overrides[get_model_registry] = lambda: fake_registry_ready
+    _app.dependency_overrides[get_geo_coder] = lambda: fake_geocoder
+    _app.dependency_overrides[get_model_registry] = lambda: fake_registry_ready
     # app.dependency_overrides[get_ml_client] = lambda: fake_ml_client
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://localhost:8000"
-    ) as ac:
-        yield ac
+    async with LifespanManager(_app):
+        async with AsyncClient(
+            transport=ASGITransport(app=_app),
+            base_url="http://localhost:8000",
+        ) as ac:
+            yield ac
+    # async with AsyncClient(
+    #     transport=ASGITransport(app=_app), base_url="http://localhost:8000"
+    # ) as ac:
+    #     yield ac
 
-    app.dependency_overrides.clear()
+    _app.dependency_overrides.clear()
 
 
 @pytest_asyncio.fixture
@@ -355,7 +362,8 @@ def raw_weather_df():
         columns={
             "time": "date",
             "temperature_2m_mean (°C)": "temperature",
-        }
+        },
+        errors="ignore",
     )
     df["city_id"] = 1
     return df

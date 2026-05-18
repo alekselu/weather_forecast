@@ -82,6 +82,7 @@ class GeoCoder:
             },
             exactly_one=True,
         )
+        print(f"Loc: {loc}")
 
         return Coordinates(float(loc.latitude), float(loc.longitude))
 

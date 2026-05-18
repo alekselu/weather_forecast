@@ -1,7 +1,9 @@
 """Асинхронный клиент для обращения к ML-контейнеру."""
+
 import httpx
 from datetime import date
 from pydantic import BaseModel
+from fastapi import Request, HTTPException
 
 from app.schemas.forecast import ForecastPayload, PredictRequest
 from app.ml.predictor import Predictor
@@ -32,10 +34,16 @@ class MLClient:
         response.raise_for_status()
         return ForecastPayload(**response.json())
 
-    def sync_predict(
-        self, request: PredictRequest, predictor: Predictor
-    ) -> ForecastPayload:
-        pass
+    def sync_predict(self, req: PredictRequest, request: Request) -> ForecastPayload:
+        print("State: ", vars(request.app.state))
+        predictor: Predictor = request.app.state.predictor
+        if not request.app.state.registry.is_ready():
+            raise HTTPException(status_code=503, detail="Model not loaded yet")
+        try:
+            response = predictor.predict(req)
+            return ForecastPayload(**response.model_dump_json())
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def health(self) -> dict:
         response = await self._client.get("/health")

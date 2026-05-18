@@ -7,8 +7,12 @@ from app.ml.models.forecaster_ensemble import ForecasterEnsemble
 from app.db.session import ConnectionParams, get_db_connections
 from app.db.models.city import City
 from app.db.models.weather_daily import WeatherDaily
+from app.ml.models.sarimax_forecaster import SARIMAXForecaster
+from app.ml.models.xgb_forecaster import XGBForecaster
 from sqlalchemy import select
+from app.params import DAILY_PARAMS
 import pandas as pd
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +48,8 @@ class Trainer:
 
     def _train_blocking(self) -> ForecasterEnsemble:
         """
+        WARNING: Сейчас без настройки параметров.
+
         Sync training block - run in executor.
         Uses existing ForecasterEnsemble + XGBTuner.
         """
@@ -52,30 +58,54 @@ class Trainer:
         from app.ml.tuning.xgb.tuner import XGBTuner
 
         # ... загрузить данные из БД, обучить, вернуть новый ансамбль
-        conn = get_db_connections()
-        with conn.session_scope() as session:
-            stmt = select(
-                WeatherDaily.date,
-                # информация о городе
-                City.id.label("city_id"),
-                City.name.label("city_name"),
-                City.latitude,
-                City.longitude,
-                # погодные данные
-                WeatherDaily.temperature_2m_mean,
-                WeatherDaily.temperature_2m_min,
-                WeatherDaily.temperature_2m_max,
-                WeatherDaily.precipitation_sum,
-                WeatherDaily.rain_sum,
-                WeatherDaily.snowfall_sum,
-                WeatherDaily.precipitation_hours,
-                WeatherDaily.wind_speed_10m_max,
-                WeatherDaily.relative_humidity_2m_mean,
-                WeatherDaily.sunshine_duration,
-            ).join(City, WeatherDaily.city_id == City.id)
-            df = pd.read_sql(stmt, session.bind)
+        # WARNING берем данные из файла, пока их нет в БД
+        # conn = get_db_connections()
+        # with conn.session_scope() as session:
+        #     stmt = select(
+        #         WeatherDaily.date,
+        #         # информация о городе
+        #         City.id.label("city_id"),
+        #         City.name.label("city_name"),
+        #         City.latitude,
+        #         City.longitude,
+        #         # погодные данные
+        #         WeatherDaily.temperature_2m_mean,
+        #         WeatherDaily.temperature_2m_min,
+        #         WeatherDaily.temperature_2m_max,
+        #         WeatherDaily.precipitation_sum,
+        #         WeatherDaily.rain_sum,
+        #         WeatherDaily.snowfall_sum,
+        #         WeatherDaily.precipitation_hours,
+        #         WeatherDaily.wind_speed_10m_max,
+        #         WeatherDaily.relative_humidity_2m_mean,
+        #         WeatherDaily.sunshine_duration,
+        #     ).join(City, WeatherDaily.city_id == City.id)
+        #     df = pd.read_sql(stmt, session.bind)
+        print("Training...")
+        df = pd.read_csv(
+            Path(__file__).parent.parent.parent / "tests/fixtures/data_2023_2026.csv",
+            parse_dates=["time"],
+            date_format="%Y-%m-%d",
+        ).rename(columns={"time": "date"})
+        df["city_name"] = "Saint Petersburg"
+
+        # Далее без изменений
+        city_dfs = {
+            city: group.reset_index(drop=True)
+            for city, group in df.groupby("city_name")
+        }
 
         ensemble = ForecasterEnsemble()
+        for city, city_df in city_dfs:
+            for target in DAILY_PARAMS:
+                X = city_df[["date", "latitude", "longitude"]]
+                y = city_df[target]
+                lat = city_df.iloc[0]["latitude"]
+                lon = city_df.iloc[0]["longitude"]
+                model = SARIMAXForecaster()
+                model.fit(X, y)
+                # WARNING заменить на название города или его id?
+                ensemble.register_model(target=target, model=model, city=f"{lat},{lon}")
         # пример:
         # for target in TARGETS:
         #     X, y = load_training_data(target)

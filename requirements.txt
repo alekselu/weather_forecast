@@ -13,6 +13,7 @@ alembic
 pydantic
 pydantic-settings
 apscheduler
+asgi-lifespan
 once-py
 python-dotenv
 SQLAlchemy
